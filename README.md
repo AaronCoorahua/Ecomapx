@@ -1,7 +1,7 @@
 # Ecomapx
 A mobile application that combines elements of event organization along with elements to combat citizen insecurity, hand in hand to Google Calendar and Google Maps
 
-# Prerrequisitos
+## Prerrequisitos
 Para poder ejecutar el código sin ninguna complicación se debe tener instalado las siguientes dependencias:
 - nodejs >= 18.17.0
 - npm >= 10.1.0
