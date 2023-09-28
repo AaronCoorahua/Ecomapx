@@ -1,5 +1,5 @@
 # Ecomapx
-A mobile application that combines elements of event organization along with elements to combat citizen insecurity, hand in hand to Google Calendar and Google Maps
+Una aplicación móvil que combina elementos de organización de eventos con elementos de lucha contra la inseguridad ciudadana, de la mano de Google Calendar y Google Maps.
 
 ## Prerrequisitos
 Para poder ejecutar el código sin ninguna complicación se debe tener instalado las siguientes dependencias:
