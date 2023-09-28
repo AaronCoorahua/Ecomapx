@@ -7,6 +7,8 @@ Para poder ejecutar el código sin ninguna complicación se debe tener instalado
 - npm >= 10.1.0
 - Ejecutar ```npm install -g react-native-cli```
 - Ejecutar ```npm install -g expo-cli```
+- Ejecutar ```npm install react-native-auth0```
+
 
 ## Ejecución del FrontEnd:
 Para ejecutar el frontend navegar a la carpeta ecomapx mediante linea de comandos ```cd ecomapx``` y ejecutar los siguientes comandos:
