@@ -7,7 +7,7 @@ Para poder ejecutar el código sin ninguna complicación se debe tener instalado
 - npm >= 10.1.0
 - Ejecutar :
 
-  -```npm install -g react-native-cli```
+  - ```npm install -g react-native-cli```
   - ```npm install -g expo-cli```
   - ```npm install react-native-auth0```
   - ```expo install expo-auth-session```n
