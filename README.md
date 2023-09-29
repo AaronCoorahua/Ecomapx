@@ -17,6 +17,6 @@ Para poder ejecutar el código sin ninguna complicación se debe tener instalado
 ## Ejecución del FrontEnd:
 Para ejecutar el frontend navegar a la carpeta ecomapx mediante linea de comandos ```cd ecomapx``` y ejecutar los siguientes comandos:
 - ```expo start```: Puedes abrir iOS, Android o la web desde aquí.
-- ```expo android```
+- ```expo android``` 
 - ```expo ios``` (requiere un dispositivo iOS o macOS para acceder a un simulador de iOS)
-- ```expo web```
+- ```expo web``` 
