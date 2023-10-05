@@ -26,12 +26,13 @@ def register():
                 'nombres':nombre,
                 'apellidos':apellidos,
                 'b_date':b_date,
+                'ciudad': None,
                 'descripcion':None,
                 'email':email,
                 'contrasena': hashlib.sha256(contrasena.encode()).hexdigest(),
                 'genero':genero,
                 'pais':None,
-                'provincia' : None,
+                'ciudad': None,
                 'telefono':None,
                 'count_events': None,
                 'list_events':None,
@@ -51,7 +52,7 @@ def register():
                 'contrasena': hashlib.sha256(contrasena.encode()).hexdigest(),
                 'genero':genero,
                 'pais':None,
-                'provincia':None,
+                'ciudad':None,
                 'telefono':None,
                 'created_events':None,
                 'promedio': None,
@@ -71,7 +72,7 @@ def register():
 def login():
     try:
         user_type = request.json['user_type']
-        email = request.json['email']
+        id = request.json['id']
         contrasena = request.json['contrasena']
 
         # Hashear la contraseña para compararla con la almacenada
@@ -80,14 +81,12 @@ def login():
         # Determinar que tabla buscar primero:
         if user_type == "ecobuscador":
             primary_table = dynamodb.Table('ecobuscadores')
-            secondary_table = dynamodb.Table('ecoorganizadores')
         elif user_type == "ecoorganizador":
             primary_table = dynamodb.Table('ecoorganizadores')
-            secondary_table = dynamodb.Table('ecobuscadores')
         else:
             return jsonify({'error':'Invalid user type'}),400
         
-        response = primary_table.get_item(Key={'email':email})
+        response = primary_table.get_item(Key={'id':id})
         if 'Item' not in response:
             return jsonify({'error': 'Email not found in database'})
         
