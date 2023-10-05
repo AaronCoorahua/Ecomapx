@@ -1,12 +1,28 @@
-from flask import Flask, session, redirect, url_for, escape, request
+from flask import Flask
+#from flask_session import Session
+from flask_dynamo import Dynamo
+from flask_cors import CORS
+import key_config as keys
+import boto3
+import os
+
+# Genera una clave secreta aleatoria
+def generate_secret_key():
+    return os.urandom(16).hex()
+
 
 app = Flask(__name__)
+app.secret_key = generate_secret_key()
+#app.config['SESSION_TYPE'] = 'filesystem'
+#Session(app)
 
-@app.route('/')
-def index():
-    if 'username' in session:
-        return 'Logged in as %s' % escape(session['username'])
-    return 'You are not logged in'
+# Configuración de CORS
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
-if __name__ == '__main__':
-    app.run(debug=True)
+dynamodb = boto3.resource(
+    'dynamodb', region_name='us-east-1',
+    aws_access_key_id=keys.ACCESS_KEY_ID,
+    aws_secret_access_key=keys.ACCESS_SECRET_KEY,
+)
+
+import views
