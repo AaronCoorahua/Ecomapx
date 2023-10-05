@@ -22,7 +22,7 @@ def register():
         if user_type == "ecobuscador":
             table = dynamodb.Table('ecobuscadores')
             data = {
-                id:str(uuid.uuid4()),
+                'id':str(uuid.uuid4()),
                 'nombres':nombre,
                 'apellidos':apellidos,
                 'b_date':b_date,
@@ -41,7 +41,7 @@ def register():
         elif user_type == "ecoorganizador":
             table = dynamodb.Table('ecoorganizador')
             data = {
-                id:str(uuid.uuid4()),
+                'id':str(uuid.uuid4()),
                 'nombres':nombre,
                 'apellidos':apellidos,
                 'b_date':b_date,
@@ -60,6 +60,7 @@ def register():
             }
         else:
             return jsonify({'error':'Invalid user type'}),400
+        print(data)
         table.put_item(Item=data)
         return jsonify({'message': f'{user_type} registered successfully'}), 201
     except Exception as e:
@@ -69,7 +70,7 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     try:
-        user_type = request.json['usertype']
+        user_type = request.json['user_type']
         email = request.json['email']
         contrasena = request.json['contrasena']
 
@@ -94,7 +95,7 @@ def login():
         if stored_password != hashed_password:
             return jsonify({'error':'Invalid password'})
 
-        
+
         # En este punto, el inicio de sesión fue exitoso
         return jsonify({'message': 'Logged in successfully'}), 200
 
