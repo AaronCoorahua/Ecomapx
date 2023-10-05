@@ -1,116 +1,91 @@
 from app import app, dynamodb
-from flask import Flask, jsonify, request, session
-from datetime import datetime
-import key_config as keys
-import boto3
+from flask import jsonify, request
+import hashlib
 import uuid
 
-from boto3.dynamodb.conditions import Key, Attr
-
-
-@app.route("/")
+@app.route('/')
 def index():
-    return "Hola Amigo como esta"
+    return 'Hola desde Flask!'
 
-@app.route("/signup", methods=["POST"])
-def signup():
-    error1 = False
-    error2 = False
-    error3 = False
-    error = False
-    response = {}
+@app.route('/register', methods=['POST'])
+def register():
     try:
-        user_id = uuid.uuid4()
-        fecha_registro = datetime.now().isoformat()
-        name = request.get_json()["name"]
-        username = request.get_json()["username"]
-        email = request.get_json()["email"]
-        password = request.get_json()["password"]
-    
-        #Elijo la tabla con la que estoy trabajando
-        table = dynamodb.Table('users')
-        #-----------------------------------------------------------------------
-        # MANEJO DE ERRORES
-        # Verificar si el usuario ya existe en DynamoDB
-        response = table.scan(
-            FilterExpression=Attr("username").eq(username) | Attr("email").eq(email)
-        )
-        if len(response["Items"]) > 0:
-            raise Exception("El usuario o correo ya existe. Inicie sesión")
+        user_type = request.json['usertype']
+        nombre = request.json['nombre']
+        apellidos = request.json['apellidos']
+        b_date = request.json['b_date']
+        email = request.json['email']
+        contrasena = request.json['contrasena']
+        genero = request.json['genero']
 
-        #Validar campos requeridos y longitud de campos
-        if len(username) == 0:
-            raise Exception("Ingrese un usuario")
-        if len(password) == 0:
-            raise Exception("Ingrese una contraseña")
-        if len(email) == 0:
-            raise Exception("Ingrese un correo válido")
-        if len(username) > 20:
-            raise Exception("El nombre de usuario debe tener un máximo de 20 caracteres")
-        if len(password) < 8:
-            raise Exception("La contraseña debe tener un mínimo de 8 caracteres")
-        #-----------------------------------------------------------------------
-
-        # Crear el item que se va a guardar en DynamoDB
-        item={
-                'user_id': str(user_id),
-                'fecha_registro': fecha_registro,
-                'username': username,
-                'name': name,
-                'email': email,
-                'password': password
-            }   
-        print(item.get("user_id"))
-        # Guardar el usuario en DynamoDB
-        table.put_item(Item = item)
-
-        
-        response["user_id"] = user_id
-        response["fecha_registro"] = fecha_registro
-        response["name"] = name
-        response["username"] = username
-        response["email"] = email
-        response["password"] = password
-        response["message"] = "Usuario creado exitosamente"
-
+        #Verificar tipo de usuario y seleccionar tabla
+        if user_type == "ecobuscador":
+            table = dynamodb.Table('ecobuscadores')
+            data = {
+                id:str(uuid.uuid4()),
+                'nombres':nombre,
+                'apellidos':apellidos,
+                'b_date':b_date,
+                'descripcion':None,
+                'email':email,
+                'contrasena':contrasena,
+                'genero':genero,
+                'pais':None,
+                'provincia' : None,
+                'telefono':None,
+                'count_events': None,
+                'list_events':None,
+                'rol':user_type,
+                'foto': None
+            }
+        elif user_type == "ecoorganizador":
+            table = dynamodb.Table('ecoorganizador')
+            data = {
+                id:str(uuid.uuid4()),
+                'nombres':nombre,
+                'apellidos':apellidos,
+                'b_date':b_date,
+                'descripcion':None,
+                'asosiacion':None,
+                'email':email,
+                'contrasena':contrasena,
+                'genero':genero,
+                'pais':None,
+                'provincia':None,
+                'telefono':None,
+                'created_events':None,
+                'promedio': None,
+                'rol':user_type,
+                'foto': None
+            }
+        else:
+            return jsonify({'error':'Invalid user type'}),400
+        table.put_item(Item=data)
+        return jsonify({'message': f'{user_type} registered successfully'}), 201
     except Exception as e:
-        error = True
-        response["message"] = str(e)
-    finally:
-        return jsonify(response)#response["message"]
-
+        return jsonify({'error': str(e)}), 500
+    
 
 @app.route('/login', methods=['POST'])
-def login_user():
-    exist = True
-    error_uc = False
-    response = {}
-
+def login():
     try:
-        email = request.get_json()['email']
-        password = request.get_json()['password']
+        username = request.json['username']
+        password = request.json['password']
 
-        #Elijo la tabla con la que estoy trabajando
-        table = dynamodb.Table('users')
+        response = table.get_item(Key={'username': username})
 
-        user_data = table.scan(
-            FilterExpression = Attr("email").eq(email)
-        )
-        
-        session['user_id'] = user_data["Items"][0]["user_id"] #Uso de cookies para almacenar datos del usuario
+        if 'Item' not in response:
+            return jsonify({'error': 'Username not found'}), 404
 
-        if user_data["Items"] == 0 or password != user_data["Items"][0]["password"]:
-            error_uc = True
-            raise Exception
-        print(session["user_id"]) 
+        stored_password = response['Item']['password']
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        if stored_password != hashed_password:
+            return jsonify({'error': 'Invalid password'}), 401
+
+        # Aquí puedes generar un token o simplemente responder exitosamente
+        # Si usas un token, Flask-JWT-Extended es una buena opción para manejar JWTs
+        return jsonify({'message': 'Logged in successfully'}), 200
 
     except Exception as e:
-        if error_uc:
-            response['message'] = "Usuario o contraseña incorrecta"
-        else: response['message'] = str(e)
-        
-        exist = False    
-
-    response['exist'] = exist
-    
-    return jsonify(response)
+        return jsonify({'error': str(e)}), 500
