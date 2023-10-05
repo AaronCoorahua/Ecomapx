@@ -10,7 +10,7 @@ def index():
 @app.route('/register', methods=['POST'])
 def register():
     try:
-        user_type = request.json['usertype']
+        user_type = request.json['user_type']
         nombre = request.json['nombre']
         apellidos = request.json['apellidos']
         b_date = request.json['b_date']
@@ -28,14 +28,14 @@ def register():
                 'b_date':b_date,
                 'descripcion':None,
                 'email':email,
-                'contrasena':contrasena,
+                'contrasena': hashlib.sha256(contrasena.encode()).hexdigest(),
                 'genero':genero,
                 'pais':None,
                 'provincia' : None,
                 'telefono':None,
                 'count_events': None,
                 'list_events':None,
-                'rol':user_type,
+                'rol':'ecobuscador',
                 'foto': None
             }
         elif user_type == "ecoorganizador":
@@ -48,14 +48,14 @@ def register():
                 'descripcion':None,
                 'asosiacion':None,
                 'email':email,
-                'contrasena':contrasena,
+                'contrasena': hashlib.sha256(contrasena.encode()).hexdigest(),
                 'genero':genero,
                 'pais':None,
                 'provincia':None,
                 'telefono':None,
                 'created_events':None,
                 'promedio': None,
-                'rol':user_type,
+                'rol':'ecoorganizador',
                 'foto': None
             }
         else:
@@ -69,10 +69,13 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     try:
-        username = request.json['username']
-        password = request.json['password']
+        user_type = request.json['usertype']
+        email = request.json['email']
+        contrasena = request.json['contrasena']
 
-        response = table.get_item(Key={'username': username})
+         # Hashear la contraseña para compararla con la almacenada
+        hashed_password = hashlib.sha256(contrasena.encode()).hexdigest()
+
 
         if 'Item' not in response:
             return jsonify({'error': 'Username not found'}), 404
