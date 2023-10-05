@@ -73,21 +73,29 @@ def login():
         email = request.json['email']
         contrasena = request.json['contrasena']
 
-         # Hashear la contraseña para compararla con la almacenada
+        # Hashear la contraseña para compararla con la almacenada
         hashed_password = hashlib.sha256(contrasena.encode()).hexdigest()
 
-
+        # Determinar que tabla buscar primero:
+        if user_type == "ecobuscador":
+            primary_table = dynamodb.Table('ecobuscadores')
+            secondary_table = dynamodb.Table('ecoorganizadores')
+        elif user_type == "ecoorganizador":
+            primary_table = dynamodb.Table('ecoorganizadores')
+            secondary_table = dynamodb.Table('ecobuscadores')
+        else:
+            return jsonify({'error':'Invalid user type'}),400
+        
+        response = primary_table.get_item(Key={'email':email})
         if 'Item' not in response:
-            return jsonify({'error': 'Username not found'}), 404
-
-        stored_password = response['Item']['password']
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
-
+            return jsonify({'error': 'Email not found in database'})
+        
+        stored_password = response['Item']['contrasena']
         if stored_password != hashed_password:
-            return jsonify({'error': 'Invalid password'}), 401
+            return jsonify({'error':'Invalid password'})
 
-        # Aquí puedes generar un token o simplemente responder exitosamente
-        # Si usas un token, Flask-JWT-Extended es una buena opción para manejar JWTs
+        
+        # En este punto, el inicio de sesión fue exitoso
         return jsonify({'message': 'Logged in successfully'}), 200
 
     except Exception as e:
