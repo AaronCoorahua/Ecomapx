@@ -1,5 +1,6 @@
 from app import app, dynamodb
 from flask import jsonify, request
+from boto3.dynamodb.conditions import Key
 import hashlib
 import uuid
 
@@ -72,7 +73,7 @@ def register():
 def login():
     try:
         user_type = request.json['user_type']
-        id = request.json['id']
+        email = request.json['email']
         contrasena = request.json['contrasena']
 
         # Hashear la contraseña para compararla con la almacenada
@@ -86,17 +87,28 @@ def login():
         else:
             return jsonify({'error':'Invalid user type'}),400
         
-        response = primary_table.get_item(Key={'id':id})
-        if 'Item' not in response:
+        response = primary_table.query(
+            IndexName = 'email_index',
+            KeyConditionExpression = Key('email').eq(email)
+        )
+
+        if not response.get('Items'):
             return jsonify({'error': 'Email not found in database'})
         
-        stored_password = response['Item']['contrasena']
+        user = response['Items'][0]
+        stored_password = user['contrasena']
+    
         if stored_password != hashed_password:
             return jsonify({'error':'Invalid password'})
 
 
         # En este punto, el inicio de sesión fue exitoso
-        return jsonify({'message': 'Logged in successfully'}), 200
+        return jsonify({
+            'message': 'Logged in successfully',
+            'nombre': user['nombres'],
+            'b_date': user['b_date'],
+            'genero': user['genero']
+        }), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
