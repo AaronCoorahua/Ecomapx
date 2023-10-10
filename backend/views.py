@@ -105,10 +105,56 @@ def login():
         # En este punto, el inicio de sesión fue exitoso
         return jsonify({
             'message': 'Logged in successfully',
+            'id': user['id'],
             'nombre': user['nombres'],
             'b_date': user['b_date'],
             'genero': user['genero']
         }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+   
+    
+@app.route('/user/<user_id>', methods=['GET'])
+def get_user_details(user_id):
+    try:
+        table = dynamodb.Table('ecobuscadores')
+        # Buscar primero en la tabla 'ecobuscadores'
+        response = table.get_item(Key={'id': user_id})
+        # Si no se encuentra en 'ecobuscadores', buscar en 'ecoorganizadores'
+        if 'Item' not in response:
+            table = dynamodb.Table('ecoorganizadores')
+            response = table.get_item(Key={'id': user_id})
+        # Si no se encuentra en ambas tablas
+        if 'Item' not in response:
+            return jsonify({'error': 'User not found'}), 404
+        user = response['Item']
+        # Eliminando la contraseña del objeto de respuesta por razones de seguridad
+        del user['contrasena']
+        return jsonify(user), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+@app.route('/user', methods=['DELETE'])
+def delete_user():
+    try:
+        user_id = request.json['user_id']
+
+        # Asumimos que el usuario será, por defecto, un "ecobuscador"
+        table = dynamodb.Table('ecobuscadores')
+        response = table.delete_item(Key={'id': user_id})
+
+        if response['ResponseMetadata']['HTTPStatusCode'] == 400:  
+            table = dynamodb.Table('ecoorganizadores')
+            response = table.delete_item(Key={'id': user_id})
+        # Si no se encuentra en ambas tablas
+        if response['ResponseMetadata']['HTTPStatusCode'] == 400: 
+            return jsonify({'error': 'User not found'}), 404
+
+        return jsonify({'message': 'User deleted successfully'}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
