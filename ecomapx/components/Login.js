@@ -11,9 +11,9 @@ export default function Login({ onSuccessfulLogin }) {
             Alert.alert('Error', 'Por favor, rellena todos los campos.');
             return;
         }
-
+    
         try {
-            const response = await fetch('http://192.168.3.4:5000/login', {
+            const response = await fetch('http://10.100.225.244:5000/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -24,17 +24,21 @@ export default function Login({ onSuccessfulLogin }) {
                     contrasena: contrasena
                 })
             });
-
+    
             const data = await response.json();
-
+    
             if (response.status === 200) {
-                onSuccessfulLogin();
+                if (data.message === 'Logged in successfully') {
+                    onSuccessfulLogin();
+                } else {
+                    Alert.alert('Error', data.error || 'Error al iniciar sesión.');
+                }
             } else {
-                Alert.alert('Error', data.error || 'Ocurrió un error al hacer login.');
+                Alert.alert('Error', data.error || 'Error al iniciar sesión.');
             }
         } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Ocurrió un error al comunicarse con el servidor.');
+            // Si hay algún error en el proceso de fetch, lo mostramos
+            Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
         }
     };
 

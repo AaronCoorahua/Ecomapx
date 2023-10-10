@@ -78,13 +78,14 @@ def login():
 
         # Hashear la contraseña para compararla con la almacenada
         hashed_password = hashlib.sha256(contrasena.encode()).hexdigest()
-
+       
         # Determinar que tabla buscar primero:
         if user_type == "ecobuscador":
             primary_table = dynamodb.Table('ecobuscadores')
         elif user_type == "ecoorganizador":
             primary_table = dynamodb.Table('ecoorganizadores')
         else:
+            print("Invalid user type")
             return jsonify({'error':'Invalid user type'}),400
         
         response = primary_table.query(
@@ -93,16 +94,19 @@ def login():
         )
 
         if not response.get('Items'):
+            print("Email not found in database")
             return jsonify({'error': 'Email not found in database'})
         
         user = response['Items'][0]
         stored_password = user['contrasena']
     
         if stored_password != hashed_password:
+            print("Invalid Password")
             return jsonify({'error':'Invalid password'})
 
 
         # En este punto, el inicio de sesión fue exitoso
+        print("Logueo exitoso")
         return jsonify({
             'message': 'Logged in successfully',
             'id': user['id'],
