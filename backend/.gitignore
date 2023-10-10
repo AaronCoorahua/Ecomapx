@@ -3,3 +3,5 @@ env/
 pyvenv.cfg
 virtualenv/
 keys.txt
+key_config.py
+__pycache__/
