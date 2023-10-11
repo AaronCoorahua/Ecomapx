@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, Picker } from 'react-native';
 
 export default function Register({ onSuccessfulRegister }) {
     const [userType, setUserType] = useState('');
@@ -16,8 +16,9 @@ export default function Register({ onSuccessfulRegister }) {
             return;
         }
 
+        console.log('Intentando registrar...');
         try {
-            const response = await fetch('http://10.100.225.244:5000/register', {
+            const response = await fetch('http://192.168.3.4:5000/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -48,44 +49,67 @@ export default function Register({ onSuccessfulRegister }) {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Registro</Text>
+
+            <Text>Tipo de Usuario</Text>
+            <Picker
+                selectedValue={userType}
+                style={styles.input}
+                onValueChange={(itemValue) => setUserType(itemValue)}
+            >
+                <Picker.Item label="Selecciona un tipo de usuario" value="" />
+                <Picker.Item label="Ecobuscador" value="ecobuscador" />
+                <Picker.Item label="Ecoorganizador" value="ecoorganizador" />
+            </Picker>
+
+            <Text>Nombre</Text>
             <TextInput
-                placeholder="Nombre"
+                placeholder="Ingresa tu nombre"
                 value={nombre}
                 onChangeText={setNombre}
                 style={styles.input}
             />
+
+            <Text>Apellidos</Text>
             <TextInput
-                placeholder="Apellidos"
+                placeholder="Ingresa tus apellidos"
                 value={apellidos}
                 onChangeText={setApellidos}
                 style={styles.input}
             />
+
+            <Text>Fecha de Nacimiento</Text>
             <TextInput
-                placeholder="Fecha de Nacimiento (YYYY-MM-DD)"
+                placeholder="YYYY-MM-DD"
                 value={b_date}
                 onChangeText={setB_date}
                 style={styles.input}
             />
+
+            <Text>Email</Text>
             <TextInput
-                placeholder="Email"
+                placeholder="Ingresa tu email"
                 value={email}
                 onChangeText={setEmail}
                 style={styles.input}
             />
+
+            <Text>Contraseña</Text>
             <TextInput
-                placeholder="Contraseña"
+                placeholder="Ingresa una contraseña"
                 value={contrasena}
                 onChangeText={setContrasena}
                 style={styles.input}
-                secureTextEntry={true}
+                secureTextEntry
             />
+
+            <Text>Género</Text>
             <TextInput
-                placeholder="Género (M/F)"
+                placeholder="Ingresa tu género"
                 value={genero}
                 onChangeText={setGenero}
                 style={styles.input}
             />
-            {/* Aquí puedes agregar un selector o botones para escoger entre 'ecobuscador' y 'ecoorganizador' para el userType */}
+
             <Button title="Registrar" onPress={handleRegister} />
         </View>
     );

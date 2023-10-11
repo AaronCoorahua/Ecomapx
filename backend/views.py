@@ -18,7 +18,7 @@ def register():
         email = request.json['email']
         contrasena = request.json['contrasena']
         genero = request.json['genero']
-
+        print("Llamado al register")
         #Verificar tipo de usuario y seleccionar tabla
         if user_type == "ecobuscador":
             table = dynamodb.Table('ecobuscadores')
