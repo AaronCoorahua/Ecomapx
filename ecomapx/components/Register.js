@@ -83,6 +83,13 @@ export default function Register({ onSuccessfulRegister }) {
                 value={b_date}
                 onChangeText={setB_date}
                 style={styles.input}
+                onBlur={() => {
+                    const regex = /^\d{4}-\d{2}-\d{2}$/;
+                    if (!regex.test(b_date)) {
+                        Alert.alert('Error', 'Formato de fecha no válido.');
+                        setB_date('');
+                    }
+                }}
             />
 
             <Text>Email</Text>
@@ -103,12 +110,16 @@ export default function Register({ onSuccessfulRegister }) {
             />
 
             <Text>Género</Text>
-            <TextInput
-                placeholder="Ingresa tu género"
-                value={genero}
-                onChangeText={setGenero}
+            <Picker
+                selectedValue={genero}
                 style={styles.input}
-            />
+                onValueChange={(itemValue) => setGenero(itemValue)}
+            >
+                <Picker.Item label="Selecciona un género" value="" />
+                <Picker.Item label="Masculino" value="masculino" />
+                <Picker.Item label="Femenino" value="femenino" />
+                <Picker.Item label="Otro" value="otro" />
+            </Picker>
 
             <Button title="Registrar" onPress={handleRegister} />
         </View>

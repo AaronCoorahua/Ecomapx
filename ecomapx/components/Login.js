@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Login({ onSuccessfulLogin }) {
     const [email, setEmail] = useState('');
@@ -29,12 +30,12 @@ export default function Login({ onSuccessfulLogin }) {
     
             if (response.status === 200) {
                 if (data.message === 'Logged in successfully') {
+                    // Almacenar el token JWT para usarlo posteriormente
+                    await AsyncStorage.setItem('userToken', data.token);
                     onSuccessfulLogin();
                 } else {
                     Alert.alert('Error', data.error || 'Error al iniciar sesión.');
                 }
-            } else {
-                Alert.alert('Error', data.error || 'Error al iniciar sesión.');
             }
         } catch (error) {
             // Si hay algún error en el proceso de fetch, lo mostramos
