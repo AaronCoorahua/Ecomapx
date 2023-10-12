@@ -3,10 +3,18 @@ from flask import jsonify, request
 from boto3.dynamodb.conditions import Key
 import hashlib
 import uuid
+from flask_jwt_extended import create_access_token, get_jwt_identity
+
+
 
 @app.route('/')
 def index():
     return 'Hola desde Flask!'
+
+#------------------------
+#METODOS PARA EL USUARIO
+#------------------------
+
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -105,10 +113,11 @@ def login():
             return jsonify({'error':'Invalid password'})
 
 
-        # En este punto, el inicio de sesión fue exitoso
-        print("Logueo exitoso")
+
+        access_token = create_access_token(identity=user['id'])
         return jsonify({
             'message': 'Logged in successfully',
+            'token': access_token,
             'id': user['id'],
             'nombre': user['nombres'],
             'b_date': user['b_date'],
@@ -124,9 +133,7 @@ def login():
 def get_user_details(user_id):
     try:
         table = dynamodb.Table('ecobuscadores')
-        # Buscar primero en la tabla 'ecobuscadores'
         response = table.get_item(Key={'id': user_id})
-        # Si no se encuentra en 'ecobuscadores', buscar en 'ecoorganizadores'
         if 'Item' not in response:
             table = dynamodb.Table('ecoorganizadores')
             response = table.get_item(Key={'id': user_id})
@@ -134,7 +141,6 @@ def get_user_details(user_id):
         if 'Item' not in response:
             return jsonify({'error': 'User not found'}), 404
         user = response['Item']
-        # Eliminando la contraseña del objeto de respuesta por razones de seguridad
         del user['contrasena']
         return jsonify(user), 200
     except Exception as e:
@@ -146,15 +152,12 @@ def get_user_details(user_id):
 def delete_user():
     try:
         user_id = request.json['user_id']
-
-        # Asumimos que el usuario será, por defecto, un "ecobuscador"
         table = dynamodb.Table('ecobuscadores')
         response = table.delete_item(Key={'id': user_id})
 
         if response['ResponseMetadata']['HTTPStatusCode'] == 400:  
             table = dynamodb.Table('ecoorganizadores')
             response = table.delete_item(Key={'id': user_id})
-        # Si no se encuentra en ambas tablas
         if response['ResponseMetadata']['HTTPStatusCode'] == 400: 
             return jsonify({'error': 'User not found'}), 404
 
@@ -162,3 +165,62 @@ def delete_user():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+#------------------------
+#METODOS PARA LOS EVENTOS
+#------------------------
+
+@app.route('/create_event', methods=['POST'])
+def create_event():
+    try:
+ 
+        id_organizador = request.json['id_organizador']
+        nombre = request.json['nombre']
+        banner = request.json.get('banner', '') 
+        fotos = request.json.get('fotos', [])   
+        ubicacion = request.json['ubicacion']
+        puntaje = int(request.json.get('puntaje', 0))  
+        descripcion = request.json['descripcion']
+        descrip_detail = request.json['descrip_detail']
+        tag = request.json['tag']
+        capacidad = request.json['capacidad']
+        limite = int(request.json['limite'])  
+        duracion = int(request.json['duracion'])  
+        fecha = request.json['fecha']
+        hora = request.json['hora']
+        status = request.json['status']
+        resenas = request.json.get('resenas', [])  
+        confirmados = int(request.json.get('confirmados', 0))  
+
+        table = dynamodb.Table('eventos')
+        event_id = str(uuid.uuid4())
+        data = {
+            'id': event_id,
+            'id_organizador': id_organizador,
+            'nombre': nombre,
+            'banner': banner,
+            'fotos': fotos,
+            'ubicacion': ubicacion,
+            'puntaje': puntaje,
+            'descripcion': descripcion,
+            'descrip_detail': descrip_detail,
+            'tag': tag,
+            'capacidad': capacidad,
+            'limite': limite,
+            'duracion': duracion,
+            'fecha': fecha,
+            'hora': hora,
+            'status': status,
+            'resenas': resenas,
+            'confirmados': confirmados
+        }
+        table.put_item(Item=data)
+        return jsonify({'message': 'Event created successfully', 'event_id': event_id}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+
+    
