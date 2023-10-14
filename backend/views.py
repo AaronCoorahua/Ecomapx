@@ -3,7 +3,7 @@ from flask import jsonify, request
 from boto3.dynamodb.conditions import Key
 import hashlib
 import uuid
-from flask_jwt_extended import create_access_token, get_jwt_identity
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 
 
 
@@ -49,7 +49,7 @@ def register():
                 'foto': None
             }
         elif user_type == "ecoorganizador":
-            table = dynamodb.Table('ecoorganizador')
+            table = dynamodb.Table('ecoorganizadores')
             data = {
                 'id':str(uuid.uuid4()),
                 'nombres':nombre,
@@ -172,10 +172,11 @@ def delete_user():
 #------------------------
 
 @app.route('/create_event', methods=['POST'])
+@jwt_required()
 def create_event():
+    current_user_id = get_jwt_identity()
     try:
- 
-        id_organizador = request.json['id_organizador']
+
         nombre = request.json['nombre']
         banner = request.json.get('banner', '') 
         fotos = request.json.get('fotos', [])   
@@ -184,8 +185,7 @@ def create_event():
         descripcion = request.json['descripcion']
         descrip_detail = request.json['descrip_detail']
         tag = request.json['tag']
-        capacidad = request.json['capacidad']
-        limite = int(request.json['limite'])  
+        capacidad = int(request.json['capacidad'])
         duracion = int(request.json['duracion'])  
         fecha = request.json['fecha']
         hora = request.json['hora']
@@ -195,9 +195,10 @@ def create_event():
 
         table = dynamodb.Table('eventos')
         event_id = str(uuid.uuid4())
+
         data = {
             'id': event_id,
-            'id_organizador': id_organizador,
+            'id_organizador': current_user_id,
             'nombre': nombre,
             'banner': banner,
             'fotos': fotos,
@@ -207,7 +208,6 @@ def create_event():
             'descrip_detail': descrip_detail,
             'tag': tag,
             'capacidad': capacidad,
-            'limite': limite,
             'duracion': duracion,
             'fecha': fecha,
             'hora': hora,
@@ -216,6 +216,22 @@ def create_event():
             'confirmados': confirmados
         }
         table.put_item(Item=data)
+        ecoorganizadores_table = dynamodb.Table('ecoorganizadores')
+
+        response = ecoorganizadores_table.update_item(
+            Key={
+                'id': current_user_id
+            },
+            UpdateExpression="ADD eventos_creados :event_id",
+            ExpressionAttributeValues={
+                ':event_id': set([event_id])
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+
+        if response['ResponseMetadata']['HTTPStatusCode'] != 200:
+            return jsonify({'error': 'Failed to update ecoorganizadores table'}), 500
+
         return jsonify({'message': 'Event created successfully', 'event_id': event_id}), 201
 
     except Exception as e:

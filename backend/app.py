@@ -17,7 +17,7 @@ app = Flask(__name__)
 app.secret_key = generate_secret_key()
 #app.config['SESSION_TYPE'] = 'filesystem'
 #Session(app)
-app.config['JWT_SECRET_KEY'] = 'tu_clave_secreta_super_segura'  # Cambia esto a una clave aleatoria y segura
+app.config['JWT_SECRET_KEY'] = generate_secret_key()  # Cambia esto a una clave aleatoria y segura
 jwt = JWTManager(app)
 # Configuración de CORS
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
