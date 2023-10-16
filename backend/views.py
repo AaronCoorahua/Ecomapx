@@ -3,8 +3,29 @@ from flask import jsonify, request
 from boto3.dynamodb.conditions import Key
 import hashlib
 import uuid
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt_identity,get_jwt_claims, jwt_required
 
+import re
+from bs4 import BeautifulSoup
+
+def sanitize_text(text, max_length=500):
+    # 1. Escape de caracteres especiales
+    text = re.escape(text)
+    
+    # 2. Eliminar etiquetas HTML y JavaScript
+    soup = BeautifulSoup(text, "html.parser")
+    sanitized_text = soup.get_text()
+    
+    # 3. Limitar la longitud del texto
+    if len(sanitized_text) > max_length:
+        sanitized_text = sanitized_text[:max_length]
+    
+    # 4. Uso de listas negras
+    blacklist = ["badword1", "badword2"]  # Define tus propias palabras prohibidas
+    for word in blacklist:
+        sanitized_text = sanitized_text.replace(word, "***")  # Reemplazar palabras prohibidas con ***
+
+    return sanitized_text
 
 
 @app.route('/')
@@ -113,8 +134,7 @@ def login():
             return jsonify({'error':'Invalid password'})
 
 
-
-        access_token = create_access_token(identity=user['id'])
+        access_token = create_access_token(identity=user['id'], additional_claims={"rol": user['rol']})
         return jsonify({
             'message': 'Logged in successfully',
             'token': access_token,
@@ -129,23 +149,33 @@ def login():
 
    
     
-@app.route('/user/<user_id>', methods=['GET'])
-def get_user_details(user_id):
+@app.route('/get_user_profile', methods=['GET'])
+@jwt_required()
+def get_user_profile():
+    current_user_id = get_jwt_identity()
+    current_user_rol = get_jwt_claims()['rol']
+    
     try:
-        table = dynamodb.Table('ecobuscadores')
-        response = table.get_item(Key={'id': user_id})
-        if 'Item' not in response:
+        # Seleccionar la tabla basada en el rol del usuario
+        if current_user_rol == 'ecobuscador':
+            table = dynamodb.Table('ecobuscadores')
+        elif current_user_rol == 'ecoorganizador':
             table = dynamodb.Table('ecoorganizadores')
-            response = table.get_item(Key={'id': user_id})
-        # Si no se encuentra en ambas tablas
+        else:
+            return jsonify({'error': 'Invalid role'}), 400
+
+        response = table.get_item(Key={'id': current_user_id})
+        
+        # Verificar si se encontró al usuario
         if 'Item' not in response:
             return jsonify({'error': 'User not found'}), 404
+        
         user = response['Item']
         del user['contrasena']
         return jsonify(user), 200
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 
 @app.route('/user', methods=['DELETE'])
@@ -238,5 +268,34 @@ def create_event():
         return jsonify({'error': str(e)}), 500
     
 
+@app.route('/add_review', methods=['POST'])
+@jwt_required()
+def add_review():
+    try:
+        user_id = get_jwt_identity() 
+        event_id = request.json['event_id']  
+        review_text = request.json['review']  
+        # Sanear el texto del comentario
+        sanitized_review = sanitize_text(review_text)
+        review_data = {
+            'user_id': user_id,
+            'review': sanitized_review
+        }
+        table = dynamodb.Table('eventos')
+        response = table.update_item(
+            Key={'id': event_id},
+            UpdateExpression="SET resenas = list_append(resenas, :new_review)",
+            ExpressionAttributeValues={
+                ':new_review': [review_data],
+            }
+        )
 
+
+        if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+            return jsonify({'message': 'Review added successfully'}), 201
+        else:
+            return jsonify({'error': 'Failed to add review'}), 500
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
     
