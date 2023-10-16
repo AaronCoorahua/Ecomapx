@@ -268,6 +268,26 @@ def create_event():
         return jsonify({'error': str(e)}), 500
     
 
+@app.route('/listEvents', methods=['GET'])
+@jwt_required()
+def list_events():
+    try:
+        table = dynamodb.Table('eventos')
+
+        # Escaneamos la tabla para obtener todos los eventos
+        response = table.scan()
+
+        if 'Items' not in response:
+            return jsonify({'error': 'Failed to fetch events'}), 500
+
+        events = response['Items']
+
+        # Devolvemos la lista de eventos
+        return jsonify(events), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/add_review', methods=['POST'])
 @jwt_required()
 def add_review():
