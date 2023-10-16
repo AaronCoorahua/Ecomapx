@@ -2,24 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Button, Image, ImageBackground } from 'react-native';
 import Inicio from './components/Inicio';
 import Login from './components/Login';
-import Register from './components/Register';  // Asegúrate de importar Register
+import Register from './components/Register';
+import Home from './components/Home';  
+import Posts from './components/Posts';
 
 export default function App() {
-    const [view, setView] = useState('loading'); // 'loading', 'login', 'loggedIn', 'register'
+    const [view, setView] = useState('loading');  // Estados posibles: 'loading', 'home', 'login', 'loggedIn', 'register'
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            setView('login');
+            setView('home');  // Cambiado a 'home' en lugar de 'login'
         }, 5000);
         return () => clearTimeout(timer);
     }, []);
 
     const handleSuccessfulLogin = () => {
-        setView('loggedIn');
+        setView('posts');
     };
 
     const handleSuccessfulRegister = () => {
-        Alert.alert('Éxito', 'Registro completado. Ahora puedes iniciar sesión.');
         setView('login');
     };
 
@@ -33,6 +34,10 @@ export default function App() {
 
     if (view === 'loading') {
         return <Inicio />;
+    } else if (view === 'home') {
+        return (
+            <Home navigateToLogin={goToLogin} navigateToRegister={goToRegister} />
+        );
     } else if (view === 'login') {
         return (
             <View style={{flex: 1}}>
@@ -47,6 +52,8 @@ export default function App() {
                 <Button title="Volver al inicio de sesión" onPress={goToLogin} />
             </View>
         );
+    } else if (view === 'posts') {
+        return <Posts />;
     } else {
         return (
             <ImageBackground source={require('./assets/larcomar.jpg')} style={styles.backgroundImage}>
@@ -59,7 +66,6 @@ export default function App() {
         );
     }
 }
-
 
 const styles = StyleSheet.create({
     container: {

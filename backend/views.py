@@ -3,7 +3,7 @@ from flask import jsonify, request
 from boto3.dynamodb.conditions import Key
 import hashlib
 import uuid
-from flask_jwt_extended import create_access_token, get_jwt_identity,get_jwt_claims, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt_identity,get_jwt, jwt_required
 
 import re
 from bs4 import BeautifulSoup
@@ -153,7 +153,7 @@ def login():
 @jwt_required()
 def get_user_profile():
     current_user_id = get_jwt_identity()
-    current_user_rol = get_jwt_claims()['rol']
+    current_user_rol = get_jwt()['rol']
     
     try:
         # Seleccionar la tabla basada en el rol del usuario
