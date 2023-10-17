@@ -273,10 +273,8 @@ def create_event():
 def list_events():
     try:
         table = dynamodb.Table('eventos')
-
         # Escaneamos la tabla para obtener todos los eventos
         response = table.scan()
-
         if 'Items' not in response:
             return jsonify({'error': 'Failed to fetch events'}), 500
 
