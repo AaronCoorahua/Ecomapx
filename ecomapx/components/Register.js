@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, Picker } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 export default function Register({ onSuccessfulRegister }) {
     const [userType, setUserType] = useState('');
@@ -9,6 +10,7 @@ export default function Register({ onSuccessfulRegister }) {
     const [email, setEmail] = useState('');
     const [contrasena, setContrasena] = useState('');
     const [genero, setGenero] = useState('');
+    const navigation = useNavigation();
 
     const handleRegister = async () => {
         if (!nombre || !apellidos || !b_date || !email || !contrasena || !genero || !userType) {
@@ -38,6 +40,7 @@ export default function Register({ onSuccessfulRegister }) {
 
             if (response.status === 201) {
                 onSuccessfulRegister();
+                navigation.navigate('Login'); // Navegación automática al login después de un registro exitoso
             } else {
                 Alert.alert('Error', data.error || 'Error al registrar.');
             }
@@ -122,6 +125,9 @@ export default function Register({ onSuccessfulRegister }) {
             </Picker>
 
             <Button title="Registrar" onPress={handleRegister} />
+            
+            {/* Botón para regresar al login */}
+            <Button title="Regresar al Login" onPress={() => navigation.navigate('Login')} />
         </View>
     );
 }

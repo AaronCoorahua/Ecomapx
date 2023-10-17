@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 export default function Login({ onSuccessfulLogin }) {
     const [email, setEmail] = useState('');
     const [contrasena, setContrasena] = useState('');
     const [userType, setUserType] = useState('');  // 'ecobuscador' or 'ecoorganizador'
-
+    const navigation = useNavigation();
     const handleLogin = async () => {
+        console.log('Intentando iniciar sesión...');
         if (!email || !contrasena || !userType) {
             Alert.alert('Error', 'Por favor, rellena todos los campos.');
             return;
@@ -30,9 +32,10 @@ export default function Login({ onSuccessfulLogin }) {
     
             if (response.status === 200) {
                 if (data.message === 'Logged in successfully') {
-                    // Almacenar el token JWT para usarlo posteriormente
+                    console.log('Inicio de sesión exitoso. Navegando a Posts...');
                     await AsyncStorage.setItem('userToken', data.token);
-                    onSuccessfulLogin();
+                    //onSuccessfulLogin();
+                    navigation.navigate('Posts')
                 } else {
                     Alert.alert('Error', data.error || 'Error al iniciar sesión.');
                 }
@@ -74,6 +77,8 @@ export default function Login({ onSuccessfulLogin }) {
             </View>
 
             <Button title="Ingresar" onPress={handleLogin} />
+            <Text style={{ textAlign: 'center', marginTop: 20 }}>¿No tienes una cuenta?</Text>
+            <Button title="Regístrate" onPress={() => navigation.navigate('Register')} />
         </View>
     );
 }

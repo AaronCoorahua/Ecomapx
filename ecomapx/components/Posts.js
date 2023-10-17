@@ -9,10 +9,11 @@ import {
 } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { useNavigation } from '@react-navigation/native';
 
 const Posts = () => {
     const [events, setEvents] = useState([]);
+    const navigation = useNavigation();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -47,12 +48,13 @@ const Posts = () => {
                 <View style={styles.card}>
                     <Image source={{ uri: item.banner }} style={styles.image} />
                     <Text style={styles.name}>{item.nombre}</Text>
+                    <Text style={styles.userId}>Creado por: {item.user_id}</Text>
                     <Text style={styles.location}>{item.ubicacion}</Text>
                     <Text style={styles.tag}>{item.tag}</Text>
                     <Text style={styles.date}>{item.fecha}</Text>
                     <Text style={styles.time}>{item.hora}</Text>
                     <Text style={styles.status}>{item.status}</Text>
-                    <TouchableOpacity style={styles.button} onPress={() => {/* Aquí puedes manejar el clic para mostrar más detalles del evento */}}>
+                    <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Event', { event: item })}>
                         <Text style={styles.buttonText}>Ver más</Text>
                     </TouchableOpacity>
                 </View>
@@ -68,6 +70,11 @@ const styles = StyleSheet.create({
         borderColor: 'grey',
         borderWidth: 1,
         borderRadius: 5,
+    },
+    userId: {
+        fontSize: 14,
+        color: 'grey',
+        marginTop: 10
     },
     image: {
         width: '100%',

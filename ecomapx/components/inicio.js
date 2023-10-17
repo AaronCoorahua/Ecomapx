@@ -1,27 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Text, Image, StyleSheet, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native'; // Paso 1
 
 export default function Inicio() {
+  const navigation = useNavigation(); // Paso 2
+
   const [showLogo, setShowLogo] = useState(true);
   const [showText, setShowText] = useState(false);
 
   useEffect(() => {
-    //Después de 2.5 segundos, hago que se desvanezca el logo:
     const logoTimer = setTimeout(() => {
       setShowLogo(false);
     }, 2500);
 
-    //Después de 5 segundos en total, mostrar el "Bienvenid@":
     const textTimer = setTimeout(() => {
       setShowText(true);
     }, 5000);
 
-    //Limpia los temporizadores cuando se desmonta el componente:
+    // Paso 3: Redireccionar después de un total de 7.5 segundos
+    const redirectTimer = setTimeout(() => {
+      navigation.navigate('Home');
+    }, 7500);
+
     return () => {
       clearTimeout(logoTimer);
       clearTimeout(textTimer);
+      clearTimeout(redirectTimer);
     };
-  }, []);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>

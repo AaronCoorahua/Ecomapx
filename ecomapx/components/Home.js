@@ -1,16 +1,19 @@
 import React from 'react';
 import { View, Text, Button, StyleSheet, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-export default function Home({ navigateToLogin, navigateToRegister }) {
+export default function Home() {
+
+  const navigation = useNavigation();
   return (
     <View style={styles.container}>
       <Image
         source={require('./../assets/logo2.png')}
         style={styles.logo}
       />
-      <Button title="Login" onPress={navigateToLogin} />
+      <Button title="Login" onPress={() => navigation.navigate('Login')} />
       <Text style={styles.text}>¿Aún no tienes una cuenta?</Text>
-      <Button title="Register" onPress={navigateToRegister} />
+      <Button title="Register" onPress={() => navigation.navigate('Register')} />
     </View>
   );
 }
