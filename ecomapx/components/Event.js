@@ -1,7 +1,10 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, Button} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+
 
 const Event = ({ route }) => {
+    const navigation = useNavigation();
     const { event } = route.params;
 
     if (!event) {
@@ -10,7 +13,7 @@ const Event = ({ route }) => {
     
     return (
         <ScrollView style={styles.container}>
-            <Image source={{ uri: event.fotos }} style={styles.image} />
+            <Image source={{ uri: event.banner }} style={styles.image} />
             <Text style={styles.title}>{event.nombre}</Text>
             <Text style={styles.userId}>Creado por: {event.id_organizador}</Text>
             <Text style={styles.location}>{event.ubicacion}</Text>
@@ -25,6 +28,7 @@ const Event = ({ route }) => {
             <Text style={styles.review}>Reseñas: {event.resenas}</Text>
             <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
             {/* Puedes continuar con más detalles aquí */}
+            <Button title="Go to UserProfile" onPress={() => navigation.navigate('UserProfile')} />
         </ScrollView>
     );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import RedesSocialesIcon from '../assets/redes-sociales.png';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect } from 'react';
 
 
 const user = {
@@ -22,7 +23,47 @@ const interes1 = 'https://media.discordapp.net/attachments/952775750728155136/11
 const interes2 = 'https://media.discordapp.net/attachments/952775750728155136/1161435260253372507/reciclar-senal.png?ex=653849e0&is=6525d4e0&hm=59e605288ece681af3f60348e92856c8b60585612cc0bf31440de50af6ec3885&=&width=423&height=423';
 
 export default function UserProfile() {
-  
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        // Función para recuperar el perfil del usuario
+        const fetchUserProfile = async () => {
+            try {
+                const token = await AsyncStorage.getItem('userToken');
+
+                if (!token) {
+                    Alert.alert('Error', 'No se encontró el token de autenticación.');
+                    return;
+                }
+
+                const response = await fetch('http://192.168.3.4:5000/get_user_profile', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`, 
+                    },
+                });
+
+                const data = await response.json();
+
+                if (response.status === 200) {
+                    setUser(data);
+                } else {
+                    Alert.alert('Error', data.error || 'Error al obtener el perfil de usuario.');
+                }
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
+                Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+            }
+        };
+
+        fetchUserProfile();
+    }, []);
+
+    if (!user) {
+        return <Text>Cargando...</Text>;
+    }
+
   return (
     <View style={styles.container}>
       {/* Banner de fondo */}
@@ -53,7 +94,7 @@ export default function UserProfile() {
           {/* Contenedor para el icono y "About Me" */}
           <View style={styles.aboutmeContent}>
             {/* Icono */}
-            <Image source={RedesSocialesIcon} style={styles.icon} />
+          
             {/* "About Me" */}
             <Text style={styles.aboutme}>{user.aboutme}</Text>
           </View>

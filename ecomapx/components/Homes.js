@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Button, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-export default function Home() {
+export default function Homes() {
 
   const navigation = useNavigation();
   return (

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, Picker } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Picker } from '@react-native-picker/picker'
 
 export default function Register({ onSuccessfulRegister }) {
     const [userType, setUserType] = useState('');
@@ -45,7 +46,7 @@ export default function Register({ onSuccessfulRegister }) {
                 Alert.alert('Error', data.error || 'Error al registrar.');
             }
         } catch (error) {
-            Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+          
         }
     };
 
