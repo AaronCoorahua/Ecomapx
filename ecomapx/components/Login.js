@@ -35,7 +35,7 @@ export default function Login({ onSuccessfulLogin }) {
                     console.log('Inicio de sesión exitoso. Navegando a Posts...');
                     await AsyncStorage.setItem('userToken', data.token);
                     //onSuccessfulLogin();
-                    navigation.navigate('Posts')
+                    navigation.navigate('MainTabs');
                 } else {
                     Alert.alert('Error', data.error || 'Error al iniciar sesión.');
                 }

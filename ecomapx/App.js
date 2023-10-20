@@ -28,6 +28,8 @@ function MainTabs() {
                         iconName = focused ? 'person' : 'person-outline';
                     } else if (route.name === 'Tasks') {
                         iconName = focused ? 'list' : 'list-outline';
+                    } else if (route.name === 'Add') {
+                        iconName = focused ? 'add-circle' : 'add-circle-outline';
                     }
 
                     return <Ionicons name={iconName} size={size} color={color} />;
@@ -38,9 +40,19 @@ function MainTabs() {
                 inactiveTintColor: 'gray',
             }}
         >
-            <Tab.Screen name="Profile" component={Homes} /> 
             <Tab.Screen name="Posts" component={Posts} />
-            <Tab.Screen name="Tasks" component={Homes} /> 
+            <Tab.Screen name="Tasks" component={UserProfile} />
+            <Tab.Screen 
+                name="Add" 
+                component={Register} 
+                listeners={({ navigation }) => ({
+                    tabPress: event => {
+                        event.preventDefault();
+                        navigation.navigate('Register');
+                    },
+                })}
+            />
+            <Tab.Screen name="Profile" component={UserProfile} />
         </Tab.Navigator>
     );
 }
@@ -50,11 +62,11 @@ export default function App() {
         <NavigationContainer>
             <Stack.Navigator initialRouteName="Inicio">
                 <Stack.Screen name="Inicio" component={Inicio} options={{ headerShown: false }} />
+                <Stack.Screen name="Homes" component={Homes} options={{ headerShown: false }} />
                 <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
                 <Stack.Screen name="Login" component={Login} />
                 <Stack.Screen name="Register" component={Register} />
                 <Stack.Screen name="Event" component={Event} />
-                <Stack.Screen name="UserProfile" component={UserProfile} />
             </Stack.Navigator>
         </NavigationContainer>
     );

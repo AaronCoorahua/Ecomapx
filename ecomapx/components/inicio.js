@@ -19,7 +19,7 @@ export default function Inicio() {
 
     // Paso 3: Redireccionar después de un total de 7.5 segundos
     const redirectTimer = setTimeout(() => {
-      navigation.navigate('MainTabs', { screen: 'Profile' });;
+      navigation.navigate('Homes');
     }, 7500);
 
     return () => {
