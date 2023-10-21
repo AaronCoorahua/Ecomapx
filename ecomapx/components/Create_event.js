@@ -4,10 +4,14 @@ import {
     Text,
     TextInput,
     Button,
-    Picker,
     StyleSheet,
-    Alert
+    Alert,
+    KeyboardAvoidingView,
+    TouchableWithoutFeedback,
+    Keyboard,
+    ScrollView,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
@@ -27,7 +31,7 @@ export default function CreateEvent() {
         try {
             const token = await AsyncStorage.getItem('userToken');
 
-            const response = await fetch('http://192.168.3.4:5000/create_event', {
+            const response = await fetch('http://192.168.95.71:5000/create_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -65,6 +69,9 @@ export default function CreateEvent() {
     };
 
     return (
+        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.container}>
             <TextInput placeholder="Nombre" value={nombre} onChangeText={setNombre} style={styles.input} />
             <TextInput placeholder="Banner" value={banner} onChangeText={setBanner} style={styles.input} />
@@ -77,19 +84,25 @@ export default function CreateEvent() {
             <TextInput placeholder="Duración" value={duracion} onChangeText={setDuracion} keyboardType="numeric" style={styles.input} />
             <TextInput placeholder="Fecha (DD/MM/YEAR)" value={fecha} onChangeText={setFecha} style={styles.input} />
             <TextInput placeholder="Hora (Ejemplo: 16:40)" value={hora} onChangeText={setHora} style={styles.input} />
+            <View style={styles.regist_event}>
             <Button title="Registrar Evento" onPress={handleSubmit} />
+            </View>
         </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#fff',
-    },
+      },
+    scrollViewContent: {
+        padding: 20,
+        backgroundColor:'#F5F5F5',
+        flexGrow: 1,
+      },
     input: {
         width: '80%',
         padding: 10,
@@ -101,5 +114,8 @@ const styles = StyleSheet.create({
     picker: {
         width: '80%',
         margin: 10,
+    },
+    regist_event:{
+        marginTop:30,
     }
 });

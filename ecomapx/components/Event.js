@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, Button} from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 
@@ -12,12 +12,15 @@ const Event = ({ route }) => {
     }
     
     return (
-        <ScrollView style={styles.container}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
+    <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <Image source={{ uri: event.banner }} style={styles.image} />
             <Text style={styles.title}>{event.nombre}</Text>
             <Text style={styles.userId}>Creado por: {event.id_organizador}</Text>
             <Text style={styles.location}>{event.ubicacion}</Text>
-            <Text style={styles.description}>{event.descripcion}</Text>
+            <View style={styles.description}>
+            <Text >{event.descripcion}</Text>
+            </View>
             <Text style={styles.detail}>{event.descrip_detail}</Text>
             <Text style={styles.tag}>{event.tag}</Text>
             <Text style={styles.capacity}>Capacidad: {event.capacidad}</Text>
@@ -28,15 +31,20 @@ const Event = ({ route }) => {
             <Text style={styles.review}>Reseñas: {event.resenas}</Text>
             <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
             {/* Puedes continuar con más detalles aquí */}
+            <View style={styles.nuevo}>
             <Button title="Go to UserProfile" onPress={() => navigation.navigate('UserProfile')} />
+            </View>
         </ScrollView>
+       </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
+
     container: {
-        padding: 10
-    },
+        flex: 1,
+      },
+
     image: {
         width: '100%',
         height: 300,
@@ -57,7 +65,8 @@ const styles = StyleSheet.create({
     },
     description: {
         fontSize: 16,
-        marginTop: 10
+        marginTop: 15,
+        marginBottom: -55,
     },
     detail: {
         fontSize: 16,
@@ -96,7 +105,14 @@ const styles = StyleSheet.create({
     confirmed: {
         fontSize: 16,
         marginTop: 10
-    }
+    },
+    scrollViewContent: {
+        padding: 20,
+        backgroundColor:'#F5F5F5',
+    },
+    nuevo: {
+        marginTop:20,
+    },
 });
 
 export default Event

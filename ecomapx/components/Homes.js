@@ -8,7 +8,7 @@ export default function Homes() {
   return (
     <View style={styles.container}>
       <Image
-        source={require('./../assets/logo2.png')}
+        source={require('./../assets/logop.png')}
         style={styles.logo}
       />
       <Button title="Login" onPress={() => navigation.navigate('Login')} />
