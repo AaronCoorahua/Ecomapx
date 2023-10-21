@@ -84,7 +84,7 @@ def register():
                 'pais':None,
                 'ciudad':None,
                 'telefono':None,
-                'created_events':None,
+                'created_events':[],
                 'promedio': None,
                 'rol':'ecoorganizador',
                 'foto': None
@@ -248,16 +248,22 @@ def create_event():
         table.put_item(Item=data)
         ecoorganizadores_table = dynamodb.Table('ecoorganizadores')
 
+        organizer = ecoorganizadores_table.get_item(Key={'id': current_user_id}).get('Item', {})
+        if 'created_events' not in organizer:
+            organizer['created_events'] = []
+
         response = ecoorganizadores_table.update_item(
             Key={
                 'id': current_user_id
             },
-            UpdateExpression="ADD eventos_creados :event_id",
+            UpdateExpression="SET created_events = list_append(if_not_exists(created_events, :emptyList), :event_id)",
             ExpressionAttributeValues={
-                ':event_id': set([event_id])
+                ':event_id': [event_id],
+                ':emptyList': []
             },
             ReturnValues="UPDATED_NEW"
         )
+
 
         if response['ResponseMetadata']['HTTPStatusCode'] != 200:
             return jsonify({'error': 'Failed to update ecoorganizadores table'}), 500
