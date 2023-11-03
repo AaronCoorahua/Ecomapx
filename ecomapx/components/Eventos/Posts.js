@@ -21,7 +21,7 @@ const Posts = () => {
                 // Obteniendo el token del localStorage
                 const token = await AsyncStorage.getItem('userToken');
 
-                const response = await fetch('http://192.168.95.71:5000/listEvents', {
+                const response = await fetch('http://172.20.10.4:5000/listEvents', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

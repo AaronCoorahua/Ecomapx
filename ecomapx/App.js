@@ -5,14 +5,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import Inicio from './components/Inicio';
-import Login from './components/Login';
-import Register from './components/Register';
-import Homes from './components/Homes';  
-import Posts from './components/Posts';
-import Event from './components/Event';
-import UserProfile from './components/UserProfile';
-import CreateEvent from './components/Create_event';
+import Inicio from './components/Inicio/Inicio';
+import Login from './components/Inicio/Login';
+import Register from './components/Inicio/Register';
+import Homes from './components/Inicio/Homes';  
+import Posts from './components/Eventos/Posts';
+import Event from './components/Eventos/Event';
+import UserProfile from './components/Profiles/UserProfile';
+import CreateEvent from './components/Eventos/Create_event';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();

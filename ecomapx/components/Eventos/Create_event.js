@@ -31,7 +31,7 @@ export default function CreateEvent() {
         try {
             const token = await AsyncStorage.getItem('userToken');
 
-            const response = await fetch('http://192.168.95.71:5000/create_event', {
+            const response = await fetch('http://172.20.10.4:5000/create_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
