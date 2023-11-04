@@ -62,8 +62,8 @@ export default function Login({ onSuccessfulLogin }) {
   };
 
   const [fontsLoaded, fontsError] = useFonts({
-    Ultra: require("../assets/fonts/Ultra-Regular.ttf"),
-    Caprasimo: require("../assets/fonts/Caprasimo-Regular.ttf"),
+    Ultra: require("../../assets/fonts/Ultra-Regular.ttf"),
+    Caprasimo: require("../../assets/fonts/Caprasimo-Regular.ttf"),
   });
 
   if (fontsError) {
@@ -90,7 +90,7 @@ export default function Login({ onSuccessfulLogin }) {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.innercontainer}>
               <View style={styles.logoContainer}>
-                <Image source={require('../assets/logop.png')} style={styles.logo} />
+                <Image source={require('../../assets/logop.png')} style={styles.logo} />
               </View>
               <View style={styles.titleContainer}>
 

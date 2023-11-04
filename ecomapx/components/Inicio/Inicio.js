@@ -33,7 +33,7 @@ export default function Inicio() {
     <View style={styles.container}>
       {showLogo && (
         <Image
-          source={require('./../assets/logo2.png')} 
+          source={require('../../assets/logo2.png')} 
           style={styles.logo}
         />
       )}

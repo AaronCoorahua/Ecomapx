@@ -68,7 +68,7 @@ export default function Register({ onSuccessfulRegister }) {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.logoContainer}>
-            <Image source={require('../assets/logop.png')} style={styles.logo} />
+            <Image source={require('../../assets/logop.png')} style={styles.logo} />
         </View>
           <Text>Tipo de Usuario</Text>
           <Picker
