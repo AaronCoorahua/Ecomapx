@@ -31,7 +31,7 @@ export default function CreateEvent() {
         try {
             const token = await AsyncStorage.getItem('userToken');
 
-            const response = await fetch('http://192.168.0.16:5000/create_event', {
+            const response = await fetch('http://192.168.95.71:5000/create_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -69,10 +69,10 @@ export default function CreateEvent() {
     };
 
     return (
-        <KeyboardAvoidingView style={styles.scrollViewContent_} behavior={Platform.OS === 'ios' ? 'padding' : null}>
+        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={styles.container_}>
+        <View style={styles.container}>
             <TextInput placeholder="Nombre" value={nombre} onChangeText={setNombre} style={styles.input} />
             <TextInput placeholder="Banner" value={banner} onChangeText={setBanner} style={styles.input} />
             <Picker selectedValue={ubicacion} onValueChange={setUbicacion} style={styles.picker}>
@@ -95,22 +95,13 @@ export default function CreateEvent() {
 }
 
 const styles = StyleSheet.create({
-    scrollViewContent_: {
+    container: {
         flex: 1,
-        backgroundColor:'#F5F5F5',
-        flexGrow: 1,
-        
-      },
-      container_: {
-        justifyContent: 'center',
-        alignItems: 'center',
       },
     scrollViewContent: {
-        flex: 1,
         padding: 20,
         backgroundColor:'#F5F5F5',
         flexGrow: 1,
-        
       },
     input: {
         width: '80%',
@@ -123,10 +114,8 @@ const styles = StyleSheet.create({
     picker: {
         width: '80%',
         margin: 10,
-        marginTop: -40,
-        marginBottom: -20,
     },
     regist_event:{
-        marginTop:15,
+        marginTop:30,
     }
 });
