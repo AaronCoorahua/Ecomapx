@@ -23,6 +23,7 @@ const interes1 = 'https://media.discordapp.net/attachments/952775750728155136/11
 const interes2 = 'https://media.discordapp.net/attachments/952775750728155136/1161435260253372507/reciclar-senal.png?ex=653849e0&is=6525d4e0&hm=59e605288ece681af3f60348e92856c8b60585612cc0bf31440de50af6ec3885&=&width=423&height=423';
 
 export default function UserProfile() {
+  /*
     const [user, setUser] = useState(null);
 
     useEffect(() => {
@@ -36,7 +37,7 @@ export default function UserProfile() {
                     return;
                 }
 
-                const response = await fetch('http://172.20.10.4:5000/get_user_profile', {
+                const response = await fetch('http://192.168.0.16:5000/get_user_profile', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -59,10 +60,12 @@ export default function UserProfile() {
 
         fetchUserProfile();
     }, []);
-
+    */
+    /* Luego descomentar, ahorita solo quiero probar si funciona bien el redireccionamiento segun el rol del usuario
     if (!user) {
         return <Text>Cargando...</Text>;
     }
+    */
 
   return (
     <View style={styles.container}>

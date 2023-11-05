@@ -34,13 +34,13 @@ export default function Register({ onSuccessfulRegister }) {
 
     console.log('Intentando registrar...');
     try {
-      const response = await fetch('http://192.168.95.71:5000/register', {
+      const response = await fetch('http://192.168.0.16:5000/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_type: userType,
+          userType: userType,
           nombre: nombre,
           apellidos: apellidos,
           b_date: b_date,
@@ -68,7 +68,7 @@ export default function Register({ onSuccessfulRegister }) {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.logoContainer}>
-            <Image source={require('../assets/logop.png')} style={styles.logo} />
+            <Image source={require('../../assets/logop.png')} style={styles.logo} />
         </View>
           <Text>Tipo de Usuario</Text>
           <Picker

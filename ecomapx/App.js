@@ -12,6 +12,7 @@ import Homes from './components/Inicio/Homes';
 import Posts from './components/Eventos/Posts';
 import Event from './components/Eventos/Event';
 import UserProfile from './components/Profiles/UserProfile';
+import UserProfileOrg from './components/Profiles/UserProfileOrg';
 import CreateEvent from './components/Eventos/Create_event';
 
 const Stack = createStackNavigator();
@@ -51,11 +52,15 @@ function MainTabs() {
   })}
 >
   <Tab.Screen name="Posts" component={Posts} />
-  <Tab.Screen name="Tasks" component={UserProfile} />
+  {/* Solo un Tab.Screen para el perfil que renderiza diferentes componentes dependiendo del rol */}
+  <Tab.Screen 
+    name="Profile" 
+    component={userRole === 'ecoorganizador' ? UserProfileOrg : UserProfile} 
+  />
   {userRole === 'ecoorganizador' && (
     <Tab.Screen 
       name="Add" 
-      component={Register} 
+      component={CreateEvent} 
       listeners={({ navigation }) => ({
         tabPress: event => {
           event.preventDefault();
@@ -64,7 +69,7 @@ function MainTabs() {
       })}
     />
   )}
-  <Tab.Screen name="Profile" component={UserProfile} />
+  <Tab.Screen name="Tasks" component={UserProfile} />
 </Tab.Navigator>
   );
 }
