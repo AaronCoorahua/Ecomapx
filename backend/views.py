@@ -222,6 +222,8 @@ def create_event():
         status = request.json['status']
         resenas = request.json.get('resenas', [])  
         confirmados = int(request.json.get('confirmados', 0))  
+        coordenadas = request.json.get('map_coordinates', {})
+
 
         table = dynamodb.Table('eventos')
         event_id = str(uuid.uuid4())
@@ -246,8 +248,8 @@ def create_event():
             'confirmados': confirmados
         }
         table.put_item(Item=data)
+        
         ecoorganizadores_table = dynamodb.Table('ecoorganizadores')
-
         organizer = ecoorganizadores_table.get_item(Key={'id': current_user_id}).get('Item', {})
         if 'created_events' not in organizer:
             organizer['created_events'] = []
