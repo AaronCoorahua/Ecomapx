@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import RedesSocialesIcon from '../assets/redes-sociales.png';
-import localImage from '../assets/estrella.png';
+import RedesSocialesIcon from '../../assets/redes-sociales.png';
+import localImage from '../../assets/estrella.png';
 import { useNavigation } from '@react-navigation/native'; // Importa useNavigation
 
 

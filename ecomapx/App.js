@@ -12,6 +12,7 @@ import Homes from './components/Inicio/Homes';
 import Posts from './components/Eventos/Posts';
 import Event from './components/Eventos/Event';
 import UserProfile from './components/Profiles/UserProfile';
+import UserProfileOrg from './components/Profiles/UserProfileOrg';
 import CreateEvent from './components/Eventos/Create_event';
 
 const Stack = createStackNavigator();
@@ -30,45 +31,47 @@ function MainTabs() {
 
     return (
         <Tab.Navigator
-            screenOptions={({ route }) => ({
-                tabBarIcon: ({ focused, color, size }) => {
-                    let iconName;
+  screenOptions={({ route }) => ({
+    tabBarIcon: ({ focused, color, size }) => {
+      let iconName;
 
-                    if (route.name === 'Posts') {
-                        iconName = focused ? 'home' : 'home-outline';
-                    } else if (route.name === 'Profile') {
-                        iconName = focused ? 'person' : 'person-outline';
-                    } else if (route.name === 'Tasks') {
-                        iconName = focused ? 'list' : 'list-outline';
-                    } else if (route.name === 'Add') {
-                        iconName = focused ? 'add-circle' : 'add-circle-outline';
-                    }
+      if (route.name === 'Posts') {
+        iconName = focused ? 'home' : 'home-outline';
+      } else if (route.name === 'Profile') {
+        iconName = focused ? 'person' : 'person-outline';
+      } else if (route.name === 'Tasks') {
+        iconName = focused ? 'list' : 'list-outline';
+      } else if (route.name === 'Add') {
+        iconName = focused ? 'add-circle' : 'add-circle-outline';
+      }
 
-                    return <Ionicons name={iconName} size={size} color={color} />;
-                },
-            })}
-            tabBarOptions={{
-                activeTintColor: 'tomato',
-                inactiveTintColor: 'gray',
-            }}
-        >
-            <Tab.Screen name="Posts" component={Posts} />
-            <Tab.Screen name="Tasks" component={UserProfile} />
-            {userRole === 'ecoorganizador' && (
-                <Tab.Screen 
-                    name="Add" 
-                    component={Register} 
-                    listeners={({ navigation }) => ({
-                        tabPress: event => {
-                            event.preventDefault();
-                            navigation.navigate('CreateEvent');
-                        },
-                    })}
-                />
-            )}
-            <Tab.Screen name="Profile" component={UserProfile} />
-        </Tab.Navigator>
-    );
+      return <Ionicons name={iconName} size={size} color={color} />;
+    },
+    tabBarActiveTintColor: 'tomato',
+    tabBarInactiveTintColor: 'gray',
+  })}
+>
+  <Tab.Screen name="Posts" component={Posts} />
+  {/* Solo un Tab.Screen para el perfil que renderiza diferentes componentes dependiendo del rol */}
+  <Tab.Screen 
+    name="Profile" 
+    component={userRole === 'ecoorganizador' ? UserProfileOrg : UserProfile} 
+  />
+  {userRole === 'ecoorganizador' && (
+    <Tab.Screen 
+      name="Add" 
+      component={CreateEvent} 
+      listeners={({ navigation }) => ({
+        tabPress: event => {
+          event.preventDefault();
+          navigation.navigate('CreateEvent');
+        },
+      })}
+    />
+  )}
+  <Tab.Screen name="Tasks" component={UserProfile} />
+</Tab.Navigator>
+  );
 }
 
 export default function App() {

@@ -34,13 +34,13 @@ export default function Register({ onSuccessfulRegister }) {
 
     console.log('Intentando registrar...');
     try {
-      const response = await fetch('http://172.20.10.4:5000/register', {
+      const response = await fetch('http://192.168.0.16:5000/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_type: userType,
+          userType: userType,
           nombre: nombre,
           apellidos: apellidos,
           b_date: b_date,
