@@ -16,16 +16,29 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ecomapx.app",
+      "config": {
+        "googleMapsApiKey": "AIzaSyB3H0fhTyuSPulGmBt_VapeFSgWgrDE4aY"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.ecomapx.app",
+      "config": {
+        "googleMapsApiKey": "AIzaSyB3H0fhTyuSPulGmBt_VapeFSgWgrDE4aY"
       }
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8d69d807-1fb1-4839-9176-cd91e756d818"
+      }
     }
   }
 }
