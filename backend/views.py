@@ -40,7 +40,7 @@ def index():
 @app.route('/register', methods=['POST'])
 def register():
     try:
-        user_type = request.json['user_type']
+        userType = request.json['userType']
         nombre = request.json['nombre']
         apellidos = request.json['apellidos']
         b_date = request.json['b_date']
@@ -48,8 +48,21 @@ def register():
         contrasena = request.json['contrasena']
         genero = request.json['genero']
         print("Llamado al register")
+
+        # Definir imágenes predeterminadas basadas en el rol y el género
+        default_images = {
+            'ecobuscador': {
+                'masculino': 'https://media.discordapp.net/attachments/996002132891271188/1171557183574511756/image_24.png?ex=655d1ca7&is=654aa7a7&hm=ae91272407d0a2a4bb49614f85738d77c7d6f90943a15be2d2a910756abad4d1&=&width=425&height=423',
+                'femenino': 'https://media.discordapp.net/attachments/1155323431915630594/1171520201183998045/image_17.png?ex=655cfa35&is=654a8535&hm=7bd18544dbac9719106aee1b8e756209f2afa458da7ded9cae2c532d3be19089&=&width=421&height=423',
+            },
+            'ecoorganizador': {
+                'masculino': 'https://media.discordapp.net/attachments/996002132891271188/1171499478965043220/52192746108.png?ex=655ce6e9&is=654a71e9&hm=829c64d55e52dd999db144bbb1aceb4f16b6dca71bfdd7ff11776bbac0652135&=&width=425&height=423',
+                'femenino': 'https://media.discordapp.net/attachments/996002132891271188/1171511781114523778/image_13.png?ex=655cf25e&is=654a7d5e&hm=4750c062a637908ba6980974d245c6a4b4e39df728b872299658ebf783c4909d&=&width=418&height=423',
+            }
+        }
+
         #Verificar tipo de usuario y seleccionar tabla
-        if user_type == "ecobuscador":
+        if userType == "ecobuscador":
             table = dynamodb.Table('ecobuscadores')
             data = {
                 'id':str(uuid.uuid4()),
@@ -67,9 +80,9 @@ def register():
                 'count_events': None,
                 'list_events':None,
                 'rol':'ecobuscador',
-                'foto': None
+                'foto': default_images['ecobuscador'][genero],
             }
-        elif user_type == "ecoorganizador":
+        elif userType == "ecoorganizador":
             table = dynamodb.Table('ecoorganizadores')
             data = {
                 'id':str(uuid.uuid4()),
@@ -87,13 +100,13 @@ def register():
                 'created_events':[],
                 'promedio': None,
                 'rol':'ecoorganizador',
-                'foto': None
+                'foto': default_images['ecoorganizador'][genero],
             }
         else:
             return jsonify({'error':'Invalid user type'}),400
         print(data)
         table.put_item(Item=data)
-        return jsonify({'message': f'{user_type} registered successfully'}), 201
+        return jsonify({'message': f'{userType} registered successfully'}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
@@ -209,7 +222,6 @@ def create_event():
 
         nombre = request.json['nombre']
         banner = request.json.get('banner', '') 
-        fotos = request.json.get('fotos', [])   
         ubicacion = request.json['ubicacion']
         puntaje = int(request.json.get('puntaje', 0))  
         descripcion = request.json['descripcion']
@@ -233,7 +245,6 @@ def create_event():
             'id_organizador': current_user_id,
             'nombre': nombre,
             'banner': banner,
-            'fotos': fotos,
             'ubicacion': ubicacion,
             'puntaje': puntaje,
             'descripcion': descripcion,
