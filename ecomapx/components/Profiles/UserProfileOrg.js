@@ -72,11 +72,12 @@ export default function UserProfileOrg() {
     if (!user) {
         return <Text></Text>;
     }
-
+  /*
   const navigation = useNavigation(); // Obtiene el objeto de navegación
   const handleCreateEventClick = () => {
     navigation.navigate('CreateEvents');
   }
+  */
   return (
     <ScrollView style={styles.container}>
 
