@@ -1,17 +1,19 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import RedesSocialesIcon from '../../assets/redes-sociales.png';
 import localImage from '../../assets/estrella.png';
 import { useNavigation } from '@react-navigation/native'; // Importa useNavigation
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect } from 'react';
 
 
 
-const user = {
+const user1 = {
   firstName: 'Aaron',
   lastName: 'Coorahua Lindo',
   profileImage: 'https://media.discordapp.net/attachments/1015053042959265802/1159916101736603800/Imagen_de_WhatsApp_2023-10-06_a_las_13.11.52_08cc0798.jpg?ex=6532c30c&is=65204e0c&hm=d7212b0de2b75384be76bec11a3503eca502a30f0ffe6061764919261411d68c&=&width=317&height=423',
   aboutme: 'ABOUT ME:',
-  description: '¡Hola! Soy Aaron Coorahua, apasionado por el fútbol ⚽🍫 y amante de las aventuras al aire libre 🌄',
+  description: 'hola sou arron',
   role: 'Eco-Organizador',
 };
 
@@ -25,12 +27,59 @@ const interes1 = 'https://media.discordapp.net/attachments/952775750728155136/11
 const interes2 = 'https://media.discordapp.net/attachments/952775750728155136/1161435260253372507/reciclar-senal.png?ex=653849e0&is=6525d4e0&hm=59e605288ece681af3f60348e92856c8b60585612cc0bf31440de50af6ec3885&=&width=423&height=423';
 
 export default function UserProfileOrg() {
-    const navigation = useNavigation(); // Obtiene el objeto de navegación
-    const handleCreateEventClick = () => {
-          navigation.navigate('CreateEvents');
+
+  const [user, setUser] = useState(null);
+
+    useEffect(() => {
+      // Función para recuperar el perfil del usuario
+      const fetchUserProfile = async () => {
+        try {
+          const token = await AsyncStorage.getItem('userToken');
+    
+          if (!token) {
+            Alert.alert('Error', 'No se encontró el token de autenticación.');
+            return;
+          }
+    
+          const response = await fetch('http://192.168.0.16:5000/get_user_profile', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+    
+          const data = await response.json();
+    
+          // Imprime la respuesta en la consola
+          console.log('Perfil del usuario:', data);
+    
+          if (response.status === 200) {
+            setUser(data);
+          } else {
+            Alert.alert('Error', data.error || 'Error al obtener el perfil de usuario.');
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+        }
+      };
+    
+      fetchUserProfile();
+    }, []);
+        
+    /* Luego descomentar, ahorita solo quiero probar si funciona bien el redireccionamiento segun el rol del usuario*/
+    if (!user) {
+        return <Text></Text>;
+    }
+
+  const navigation = useNavigation(); // Obtiene el objeto de navegación
+  const handleCreateEventClick = () => {
+    navigation.navigate('CreateEvents');
   }
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
+
       {/* Banner de fondo */}
       <Image source={{ uri: bannerImage }} style={styles.bannerImage} />
 
@@ -41,34 +90,40 @@ export default function UserProfileOrg() {
         <Image source={localImage} style={styles.estrella} />
         {/* Agrega más estrellas según sea necesario */}
       </View>
-
+ {/*
       <TouchableOpacity
         style={styles.createEventButton}
         onPress={handleCreateEventClick}
       >
         <Text style={styles.createEventButtonText}>Create Event</Text>
       </TouchableOpacity>
-
+*/}
       {/* Contenedor para la imagen de perfil */}
       <View style={styles.profileContainer}>
         {/* Imagen de perfil */}
-        <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
+        <Image
+          source={{ uri: user.foto }}
+          style={styles.profileImage}
+        />
       </View>
 
       {/* Contenedor principal de texto */}
-      <View style={styles.textContainer}>
+      <View style={styles.nuevo}>
         {/* Contenedor de la sección de nombre */}
         <View style={styles.nameContainer}>
           {/* Nombre y apellido */}
-          <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
+          <Text style={styles.name}>{user.nombres} {user.apellidos}</Text>
         </View>
 
         {/* Contenedor del rol */}
         <View style={styles.roleContainer}>
           {/* Rol */}
-          <Text style={styles.role}>{user.role}</Text>
+          <Text style={styles.role}>
+          {user.rol === 'ecoorganizador' ? 'Eco-Organizador' : user.rol}
+          </Text>
         </View>
-
+        </View>
+        <View style={styles.textContainer}>
         {/* Contenedor de la sección "About Me" */}
         <View style={styles.aboutmeContainer}>
           {/* Contenedor para el icono y "About Me" */}
@@ -76,16 +131,18 @@ export default function UserProfileOrg() {
             {/* Icono */}
             <Image source={RedesSocialesIcon} style={styles.icon} />
             {/* "About Me" */}
-            <Text style={styles.aboutme}>{user.aboutme}</Text>
+            <Text style={styles.aboutme}>{user1.aboutme}</Text>
           </View>
         </View>
 
         {/* Contenedor de la descripción */}
         <View style={styles.descriptionContainer}>
           {/* Descripción */}
-          <Text style={styles.description}>{user.description}</Text>
+          <Text style={styles.description}>{user.descripcion}</Text>
+        </View>
         </View>
 
+  <View style={styles.nuevo}>
 {/* Contenedor de la sección de Intereses */}
 <View style={styles.interesesContainer}>
   {/* Título de Intereses */}
@@ -111,16 +168,21 @@ export default function UserProfileOrg() {
   </View>
 </View>
 
+</View>
 
-      </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  nuevo:{
+
+    top: 50,
+    left: 0,
+  },
   container: {
     flex: 1,
-    alignItems: 'center',
+
   },
   bannerImage: {
     width: '100%',
@@ -144,12 +206,13 @@ profileImage: {
   borderRadius: 63, // Asegúrate de que el radio de borde sea la mitad del ancho/altura
   alignSelf: 'center',
   justifyContent: 'center',
+
 },
 
   textContainer: {
-    position: 'absolute',
-    top: 250,
-    left: 20,
+    top: 50,
+    marginLeft: 20,
+    marginRight:15,
   },
   nameContainer: {
     marginBottom: 10,
@@ -183,10 +246,12 @@ roleContainer: {
   descriptionContainer: {
     marginTop: 9,
     maxWidth: 350,
+    flex: 1,
   },
   description: {
     fontSize: 16,
     color: 'black',
+    flexShrink: 1,
   },
   icon: {
     width: 24, //Ancho del icono
@@ -208,11 +273,15 @@ roleContainer: {
     fontSize: 19,
     fontWeight: 'bold',
     marginBottom: 10,
+    marginLeft: 20,
   },
   interesesContent: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginRight:20,
+    marginLeft:20,
+
   },
   //este es el que contiene tanto al Icono y el Titulo del Interes
 interes: {
