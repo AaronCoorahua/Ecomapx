@@ -64,13 +64,51 @@ export default function Register({ onSuccessfulRegister }) {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
+
+    <KeyboardAvoidingView
+    style={styles.container}
+    behavior={Platform.OS === 'ios' ? 'padding' : 100}
+    keyboardVerticalOffset={Platform.OS === 'ios' ?  90: 0} // Ajusta el valor según sea necesario
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.logoContainer}>
             <Image source={require('../../assets/logop.png')} style={styles.logo} />
         </View>
-          <Text>Tipo de Usuario</Text>
+        <Text>Nombres:</Text>
+          <TextInput
+            placeholder="Ingresa tus nombres"
+            value={nombre}
+            onChangeText={setNombre}
+            style={styles.input}
+          />
+
+          <Text>Apellidos:</Text>
+          <TextInput
+            placeholder="Ingresa tus apellidos"
+            value={apellidos}
+            onChangeText={setApellidos}
+            style={styles.input}
+          />
+
+          <Text>Email:</Text>
+          <TextInput
+            placeholder="Ingresa tu Email"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+          />
+
+          <Text>Contraseña:</Text>
+          <TextInput
+            placeholder="Ingresa una contraseña"
+            value={contrasena}
+            onChangeText={setContrasena}
+            style={styles.input}
+            secureTextEntry
+          />
+
+          <Text>Tipo de Usuario:</Text>
           <Picker
             selectedValue={userType}
             style={styles.input}
@@ -81,23 +119,7 @@ export default function Register({ onSuccessfulRegister }) {
             <Picker.Item label="Ecoorganizador" value="ecoorganizador" />
           </Picker>
 
-          <Text>Nombre</Text>
-          <TextInput
-            placeholder="Ingresa tu nombre"
-            value={nombre}
-            onChangeText={setNombre}
-            style={styles.input}
-          />
-
-          <Text>Apellidos</Text>
-          <TextInput
-            placeholder="Ingresa tus apellidos"
-            value={apellidos}
-            onChangeText={setApellidos}
-            style={styles.input}
-          />
-
-          <Text>Fecha de Nacimiento</Text>
+          <Text>Fecha de Nacimiento:</Text>
           <TextInput
             placeholder="YYYY-MM-DD"
             value={b_date}
@@ -112,24 +134,7 @@ export default function Register({ onSuccessfulRegister }) {
             }}
           />
 
-          <Text>Email</Text>
-          <TextInput
-            placeholder="Ingresa tu email"
-            value={email}
-            onChangeText={setEmail}
-            style={styles.input}
-          />
-
-          <Text>Contraseña</Text>
-          <TextInput
-            placeholder="Ingresa una contraseña"
-            value={contrasena}
-            onChangeText={setContrasena}
-            style={styles.input}
-            secureTextEntry
-          />
-
-          <Text>Género</Text>
+          <Text>Género:</Text>
           <Picker
             selectedValue={genero}
             style={styles.input}
@@ -141,6 +146,9 @@ export default function Register({ onSuccessfulRegister }) {
             <Picker.Item label="Otro" value="otro" />
           </Picker>
 
+          {/*Descripcion*/}
+          
+
           <Button title="Registrar" onPress={handleRegister} />
           <Button title="Regresar al Login" onPress={() => navigation.navigate('Login')} />
         </ScrollView>
@@ -150,13 +158,13 @@ export default function Register({ onSuccessfulRegister }) {
 }
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-    },
-    scrollViewContent: {
-      padding: 20,
+  container: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    padding: 20,
       backgroundColor:'#F5F5F5',
-    },
+  },
     title: {
       fontSize: 24,
       marginBottom: 20,
@@ -174,9 +182,9 @@ const styles = StyleSheet.create({
     marginTop: -55,
     },
     logo: {
-        width: 200,
-        height: 200,
-        marginTop: 55,
+        width: 180,
+        height: 180,
+        marginTop: 58,
     },
 
   });
