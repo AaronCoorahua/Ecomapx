@@ -143,7 +143,7 @@ export default function UserProfileOrg() {
         </View>
         </View>
 
-  <View style={styles.nuevo}>
+
 {/* Contenedor de la sección de Intereses */}
 <View style={styles.interesesContainer}>
   {/* Título de Intereses */}
@@ -168,9 +168,6 @@ export default function UserProfileOrg() {
     {/* Agrega más intereses según sea necesario */}
   </View>
 </View>
-
-</View>
-
     </ScrollView>
   );
 }
@@ -268,7 +265,7 @@ roleContainer: {
     alignItems: 'center', //Alinea verticalmente los elementos al centro
   },
   interesesContainer: {
-    marginTop: 11,
+    marginTop: 60,
   },
   interesesTitle: {
     fontSize: 19,
