@@ -10,7 +10,7 @@ const user1 = {
   lastName: 'Coorahua',
   profileImage: 'https://media.discordapp.net/attachments/1015053042959265802/1159916101736603800/Imagen_de_WhatsApp_2023-10-06_a_las_13.11.52_08cc0798.jpg?ex=6532c30c&is=65204e0c&hm=d7212b0de2b75384be76bec11a3503eca502a30f0ffe6061764919261411d68c&=&width=317&height=423',
   aboutme: 'ABOUT ME:',
-  description: '¡hola!',
+  description: '¡hola',
   role: 'Eco-Buscador',
 };
 
@@ -69,84 +69,80 @@ export default function UserProfile() {
     if (!user) {
         return <Text></Text>;
     }
+
+    return (
+      <ScrollView style={styles.container}>
+        {/* Banner de fondo */}
+        <Image source={{ uri: bannerImage }} style={styles.bannerImage} />
+        
+        {/* Contenedor para la imagen de perfil */}
+        <View style={styles.profileImageContainer}>
+          {/* Imagen de perfil */}
+          <Image
+            source={{ uri: user.foto }}
+            style={styles.profileImage}
+          />
+        </View>
     
-
-  return (
-    <ScrollView style={styles.container}>
-      {/* Banner de fondo */}
-      <Image source={{ uri: bannerImage }} style={styles.bannerImage} />
-
-      {/* Contenedor para la imagen de perfil */}
-      <View style={styles.profileContainer}>
-        {/* Imagen de perfil */}
-        <Image
-          source={{ uri: user.foto }}
-          style={styles.profileImage}
-        />
-      </View>
-
-      {/* Contenedor principal de texto */}
-      <View style={styles.nuevo}>
-        {/* Contenedor de la sección de nombre */}
-        <View style={styles.nameContainer}>
-          {/* Nombres y apellidos */}
-          <Text style={styles.name}>{user.nombres} {user.apellidos}</Text>
-        </View>
-
-        {/* Contenedor del rol */}
-        <View style={styles.roleContainer}>
-          {/* Rol */}
-          <Text style={styles.role}>
-          {user.rol === 'ecobuscador' ? 'Eco-Buscador' : user.rol}
-          </Text>
-        </View>
-        </View>
+        {/* Contenedor principal de texto */}
         <View style={styles.textContainer}>
+          {/* Contenedor de la sección de nombre */}
+          <View style={styles.nameContainer}>
+            {/* Nombres y apellidos */}
+            <Text style={styles.name}>{user.nombres} {user.apellidos}</Text>
+          </View>
+    
+          {/* Contenedor del rol */}
+          <View style={styles.roleContainer}>
+            {/* Rol */}
+            <Text style={styles.role}>
+              {user.rol === 'ecobuscador' ? 'Eco-Buscador' : user.rol}
+            </Text>
+          </View>
+          
           {/* Contenedor de la sección "About Me" */}
           <View style={styles.aboutmeContainer}>
-          {/* Contenedor para el icono y "About Me" */}
-          <View style={styles.aboutmeContent}>
-            {/* Icono */}
-            <Image source={RedesSocialesIcon} style={styles.icon} />
-            {/* "About Me" */}
-            <Text style={styles.aboutme}>{user1.aboutme}</Text>
+            {/* Contenedor para el icono y "About Me" */}
+            <View style={styles.aboutmeContent}>
+              {/* Icono */}
+              <Image source={RedesSocialesIcon} style={styles.icon} />
+              {/* "About Me" */}
+              <Text style={styles.aboutme}>{user1.aboutme}</Text>
+            </View>
+          </View>
+          
+          {/* Contenedor de la descripción */}
+          <View style={styles.descriptionContainer}>
+            {/* Descripción */}
+            <Text style={styles.description}>{user.descripcion}</Text>
           </View>
         </View>
-        {/* Contenedor de la descripción */}
-        <View style={styles.descriptionContainer}>
-          {/* Descripción */}
-          <Text style={styles.description}>{user.descripcion}</Text>
+    
+        {/* Contenedor de la sección de Intereses */}
+        <View style={styles.interesesContainer}>
+          {/* Título de Intereses */}
+          <Text style={styles.interesesTitle}>Intereses:</Text>
+          {/* Contenedor de intereses */}
+          <View style={styles.interesesContent}>
+            {/* Interés 1 */}
+            <View style={styles.interes}>
+              <View style={styles.interesIconContainer}>
+                <Image source={{ uri: interes1 }} style={styles.interesIcon} />
+              </View>
+              <Text style={styles.interesTitle}>Actividades al Aire</Text>
+            </View>
+    
+            {/* Interés 2 */}
+            <View style={styles.interes}>
+              <View style={styles.interesIconContainer}>
+                <Image source={{ uri: interes2 }} style={styles.interesIcon} />
+              </View>
+              <Text style={styles.interesTitle}>Reciclaje</Text>
+            </View>
+            {/* Agrega más intereses según sea necesario */}
+          </View>
         </View>
-        </View>
-
-<View style={styles.nuevo2}>
-{/* Contenedor de la sección de Intereses */}
-<View style={styles.interesesContainer}>
-  {/* Título de Intereses */}
-  <Text style={styles.interesesTitle}>Intereses:</Text>
-  {/* Contenedor de intereses */}
-  <View style={styles.interesesContent}>
-    {/* Interés 1 */}
-    <View style={styles.interes}>
-      <View style={styles.interesIconContainer}>
-        <Image source={{ uri: interes1 }} style={styles.interesIcon} />
-      </View>
-      <Text style={styles.interesTitle}>Actividades al Aire</Text>
-    </View>
-
-    {/* Interés 2 */}
-    <View style={styles.interes}>
-      <View style={styles.interesIconContainer}>
-        <Image source={{ uri: interes2 }} style={styles.interesIcon} />
-      </View>
-      <Text style={styles.interesTitle}>Reciclaje</Text>
-    </View>
-    {/* Agrega más intereses según sea necesario */}
-  </View>
-</View>
-</View>
-
-<View style={styles.nuevo2}>
+    
         {/* Contenedor de la sección de medallas */}
         <View style={styles.medalsContainer}>
           {/* Título de Medallas */}
@@ -166,12 +162,17 @@ export default function UserProfile() {
             {/* Agrega más medallas según sea necesario */}
           </View>
         </View>
-      </View>
       </ScrollView>
-  );
+    );
+    
 }
 
 const styles = StyleSheet.create({
+  profileImageContainer: {
+    position: 'absolute',
+    left: 10,
+    top: 140,
+  },
   nuevo:{
     top: 50,
     left: 20,
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'red',
   },
   textContainer: {
-    top: 50,
+    top: 42,
     marginLeft: 20,
     marginRight:15,
   },
@@ -254,7 +255,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', //Alinea verticalmente los elementos al centro
   },
   interesesContainer: {
-    marginTop: 11,
+    marginTop: 50,
   },
   interesesTitle: {
     fontSize: 19,
@@ -324,6 +325,8 @@ interes: {
   medalTitle: {
     marginTop: 5,
     fontWeight: 'bold',
+    marginLeft:20,
+    marginRight: 20,
   },
 });
 
