@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'; // Importa KeyboardAwareScrollView
 
 export default function Register({ onSuccessfulRegister }) {
   const [userType, setUserType] = useState('');
@@ -24,10 +25,11 @@ export default function Register({ onSuccessfulRegister }) {
   const [email, setEmail] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [genero, setGenero] = useState('');
+  const [descripcion, setDescripcion] = useState('');
   const navigation = useNavigation();
 
   const handleRegister = async () => {
-    if (!nombre || !apellidos || !b_date || !email || !contrasena || !genero || !userType) {
+    if (!nombre || !apellidos || !b_date || !email || !contrasena || !genero || !userType || !descripcion) {
       Alert.alert('Error', 'Por favor, rellena todos los campos.');
       return;
     }
@@ -47,6 +49,7 @@ export default function Register({ onSuccessfulRegister }) {
           email: email,
           contrasena: contrasena,
           genero: genero,
+          descripcion: descripcion,
         }),
       });
 
@@ -64,18 +67,20 @@ export default function Register({ onSuccessfulRegister }) {
   };
 
   return (
-
-    <KeyboardAvoidingView
-    style={styles.container}
-    behavior={Platform.OS === 'ios' ? 'padding' : 100}
-    keyboardVerticalOffset={Platform.OS === 'ios' ?  90: 0} // Ajusta el valor según sea necesario
+    <KeyboardAwareScrollView
+      style={styles.container}
+      contentContainerStyle={styles.scrollViewContent}
+      //resetScrollToCoords={{ x: 0, y: 0 }}
+      //scrollEnabled={true}
+      //enableOnAndroid={true}
+      extraScrollHeight={40} // Ajusta el valor según sea necesario
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={styles.logoContainer}>
+        <View>
+          <View style={styles.logoContainer}>
             <Image source={require('../../assets/logop.png')} style={styles.logo} />
-        </View>
-        <Text>Nombres:</Text>
+          </View>
+          <Text>Nombres:</Text>
           <TextInput
             placeholder="Ingresa tus nombres"
             value={nombre}
@@ -147,13 +152,23 @@ export default function Register({ onSuccessfulRegister }) {
           </Picker>
 
           {/*Descripcion*/}
+          <Text>Sobre mi:</Text>
+          <TextInput
+            placeholder="Escribe una descripción sobre ti"
+            value={descripcion}
+            onChangeText={setDescripcion}
+            style={styles.input}
+            multiline={true} // Esto permite múltiples líneas en el campo
+            numberOfLines={5} // Puedes ajustar el número de líneas según desees
+          />
           
 
           <Button title="Registrar" onPress={handleRegister} />
           <Button title="Regresar al Login" onPress={() => navigation.navigate('Login')} />
-        </ScrollView>
+          </View>
+
       </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
 
