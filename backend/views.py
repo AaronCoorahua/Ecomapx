@@ -4,6 +4,7 @@ from boto3.dynamodb.conditions import Key
 import hashlib
 import uuid
 from flask_jwt_extended import create_access_token, get_jwt_identity,get_jwt, jwt_required
+from decimal import Decimal
 
 import re
 from bs4 import BeautifulSoup
@@ -234,7 +235,10 @@ def create_event():
         status = request.json['status']
         resenas = request.json.get('resenas', [])  
         confirmados = int(request.json.get('confirmados', 0))  
-        coordenadas = request.json.get('map_coordinates', {})
+        coordenadas = request.json.get('coordenadas', {})
+        if coordenadas:  
+            coordenadas['latitude'] = Decimal(str(coordenadas['latitude']))
+            coordenadas['longitude'] = Decimal(str(coordenadas['longitude']))
 
 
         table = dynamodb.Table('eventos')
@@ -256,7 +260,8 @@ def create_event():
             'hora': hora,
             'status': status,
             'resenas': resenas,
-            'confirmados': confirmados
+            'confirmados': confirmados,
+            'coordenadas': coordenadas
         }
         table.put_item(Item=data)
         
