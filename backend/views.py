@@ -47,6 +47,7 @@ def register():
         email = request.json['email']
         contrasena = request.json['contrasena']
         genero = request.json['genero']
+        descripcion = request.json['descripcion']
         print("Llamado al register")
 
         # Definir imágenes predeterminadas basadas en el rol y el género
@@ -70,7 +71,7 @@ def register():
                 'apellidos':apellidos,
                 'b_date':b_date,
                 'ciudad': None,
-                'descripcion':None,
+                'descripcion':descripcion,
                 'email':email,
                 'contrasena': hashlib.sha256(contrasena.encode()).hexdigest(),
                 'genero':genero,
@@ -89,7 +90,7 @@ def register():
                 'nombres':nombre,
                 'apellidos':apellidos,
                 'b_date':b_date,
-                'descripcion':None,
+                'descripcion':descripcion,
                 'asosiacion':None,
                 'email':email,
                 'contrasena': hashlib.sha256(contrasena.encode()).hexdigest(),
