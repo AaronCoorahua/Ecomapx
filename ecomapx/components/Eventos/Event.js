@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import MapView, { Marker } from 'react-native-maps';
 
 
 const Event = ({ route }) => {
@@ -30,9 +31,29 @@ const Event = ({ route }) => {
             <Text style={styles.status}>{event.status}</Text>
             <Text style={styles.review}>Reseñas: {event.resenas}</Text>
             <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
+            <MapView
+            style={styles.map}
+            region={{
+                latitude: parseFloat(event.coordenadas.latitude),
+                longitude: parseFloat(event.coordenadas.longitude),
+                latitudeDelta: 0.8,
+                longitudeDelta: 0.8,
+            }}
+            scrollEnabled={true}
+            zoomEnabled={true}
+            pitchEnabled={false}
+            rotateEnabled={false}
+            >
+            <Marker
+            coordinate={{
+                latitude: parseFloat(event.coordenadas.latitude),
+                longitude: parseFloat(event.coordenadas.longitude),
+            }}
+            />
+            </MapView>
             {/* Puedes continuar con más detalles aquí */}
             <View style={styles.nuevo}>
-            <Button title="Go to UserProfile" onPress={() => navigation.navigate('UserProfile')} />
+            <Button title="Go to UserProfile" onPress={() => navigation.navigate('Profile')} />
             </View>
         </ScrollView>
        </KeyboardAvoidingView>
@@ -112,6 +133,11 @@ const styles = StyleSheet.create({
     },
     nuevo: {
         marginTop:20,
+    },
+    map: {
+        width: '100%',
+        height: 200, 
+        marginTop: 20,
     },
 });
 
