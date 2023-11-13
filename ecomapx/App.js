@@ -14,6 +14,7 @@ import Event from './components/Eventos/Event';
 import UserProfile from './components/Profiles/UserProfile';
 import UserProfileOrg from './components/Profiles/UserProfileOrg';
 import CreateEvent from './components/Eventos/Create_event';
+import CalendarViewDiaySem from './components/Calendar/calendarViewDiaySem';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -69,7 +70,7 @@ function MainTabs() {
       })}
     />
   )}
-  <Tab.Screen name="Tasks" component={UserProfile} />
+  <Tab.Screen name="Calendar" component={CalendarViewDiaySem} />
 </Tab.Navigator>
   );
 }
