@@ -2,12 +2,22 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
+const getSecurityIconColor = (securityLevel) => {
+    if (securityLevel <= 3) {
+        return 'green';
+    } else if (securityLevel <= 7) {
+        return 'yellow';
+    } else {
+        return 'red';
+    }
+};
 
 const Event = ({ route }) => {
     const navigation = useNavigation();
     const { event } = route.params;
-
+    
     // Estados para controlar la puntuación y la visibilidad del modal
     // Asegúrate de que starCount se inicializa como un número
     const [starCount, setStarCount] = useState(parseFloat(event.puntaje)); // Puntuación actual
@@ -53,7 +63,7 @@ const Event = ({ route }) => {
     
             console.log('Puntuación seleccionada por el usuario:', tempStarCount);
     
-            const response = await fetch('http://192.168.0.16:5000/rate_event', {
+            const response = await fetch('http://192.168.3.4:5000/rate_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -135,7 +145,7 @@ const Event = ({ route }) => {
             }}
             />
             </MapView>
-            {/* Puedes continuar con más detalles aquí */}
+            <Ionicons name="alert-circle" size={30} color={securityIconColor} style={styles.securityIcon} />
             <View style={styles.nuevo}>
             <Button title="Go to UserProfile" onPress={() => navigation.navigate('Profile')} />
             </View>
