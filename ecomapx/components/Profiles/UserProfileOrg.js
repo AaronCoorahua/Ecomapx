@@ -1,12 +1,21 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, FlatList } from 'react-native';
 import RedesSocialesIcon from '../../assets/redes-sociales.png';
 import localImage from '../../assets/estrella.png';
 import { useNavigation } from '@react-navigation/native'; // Importa useNavigation
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
 
-
+const eventos = [
+  { id: '1', nombre: 'Evento 1', imagen: 'https://media.discordapp.net/attachments/952775750728155136/1161508511394566174/image.png?ex=65388e18&is=65261918&hm=ca6ecb69096dbc6aca2b9f1d434147f578b6fd40e92ee36bd68be61ddc649609&=' },
+  { id: '2', nombre: 'Evento 2', imagen: 'https://media.discordapp.net/attachments/952775750728155136/1161508626549182534/image.png?ex=65388e34&is=65261934&hm=ee8f2a963e9d37a9f5424c73e17278a0320a49239476245752dd3dd3e04da77d&=&width=297&height=423' },
+    { id: '3', nombre: 'Evento 1', imagen: 'https://media.discordapp.net/attachments/952775750728155136/1161508511394566174/image.png?ex=65388e18&is=65261918&hm=ca6ecb69096dbc6aca2b9f1d434147f578b6fd40e92ee36bd68be61ddc649609&=' },
+  { id: '4', nombre: 'Evento 2', imagen: 'https://media.discordapp.net/attachments/952775750728155136/1161508626549182534/image.png?ex=65388e34&is=65261934&hm=ee8f2a963e9d37a9f5424c73e17278a0320a49239476245752dd3dd3e04da77d&=&width=297&height=423' },
+    { id: '5', nombre: 'Evento 1', imagen: 'https://media.discordapp.net/attachments/952775750728155136/1161508511394566174/image.png?ex=65388e18&is=65261918&hm=ca6ecb69096dbc6aca2b9f1d434147f578b6fd40e92ee36bd68be61ddc649609&=' },
+  { id: '6', nombre: 'Evento 2', imagen: 'https://media.discordapp.net/attachments/952775750728155136/1161508626549182534/image.png?ex=65388e34&is=65261934&hm=ee8f2a963e9d37a9f5424c73e17278a0320a49239476245752dd3dd3e04da77d&=&width=297&height=423' },
+    { id: '7', nombre: 'Evento 1', imagen: 'https://media.discordapp.net/attachments/952775750728155136/1161508511394566174/image.png?ex=65388e18&is=65261918&hm=ca6ecb69096dbc6aca2b9f1d434147f578b6fd40e92ee36bd68be61ddc649609&=' },
+  // Agrega más eventos aquí
+];
 
 const user1 = {
   firstName: 'Aaron',
@@ -16,6 +25,7 @@ const user1 = {
   description: 'hola sou arron',
   role: 'Eco-Organizador',
 };
+
 
 const bannerImage = 'https://media.discordapp.net/attachments/1015053042959265802/1159934655043219546/pngtree-hilarious-3d-gorilla-cartoon-pumping-iron-image_3813702.png?ex=6532d454&is=65205f54&hm=764140bfb6a3da54692bda045156ab0831c6bca4b9cd318ffb5bc780fcba9ef3';
 
@@ -29,7 +39,9 @@ const interes2 = 'https://media.discordapp.net/attachments/952775750728155136/11
 export default function UserProfileOrg() {
 
   const [user, setUser] = useState(null);
+  const [eventos, setEventos] = useState([]);
 
+/*
     useEffect(() => {
       // Función para recuperar el perfil del usuario
       const fetchUserProfile = async () => {
@@ -66,6 +78,64 @@ export default function UserProfileOrg() {
       };
     
       fetchUserProfile();
+    }, []);
+*/
+    useEffect(() => {
+      const fetchUserProfileAndEvents = async () => {
+        try {
+          const token = await AsyncStorage.getItem('userToken');
+          if (!token) {
+            Alert.alert('Error', 'No se encontró el token de autenticación.');
+            return;
+          }
+    
+          // Cargar perfil del usuario
+          const userProfileResponse = await fetch('http://192.168.0.16:5000/get_user_profile', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const userData = await userProfileResponse.json();
+
+          // Imprime la respuesta en la consola
+          console.log('Perfil del usuario:', userData);
+          
+          if (userProfileResponse.status === 200) {
+            setUser(userData);
+          } else {
+            Alert.alert('Error', userData.error || 'Error al obtener el perfil de usuario.');
+            return;
+          }
+    
+          // Cargar eventos
+          const eventsResponse = await fetch('http://192.168.0.16:5000/get_events_by_organizer', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const eventsData = await eventsResponse.json();
+
+          // Imprime la respuesta en la consola
+          console.log('Eventos del Organizador:', eventsData);
+
+          if (eventsResponse.status === 200) {
+            setEventos(eventsData);
+          } else {
+            Alert.alert('Error', eventsData.error || 'Error al obtener los eventos.');
+          }
+    
+        } catch (error) {
+          console.error('Error:', error);
+          Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+        }
+      };
+    
+      fetchUserProfileAndEvents();
     }, []);
         
     /* Luego descomentar, ahorita solo quiero probar si funciona bien el redireccionamiento segun el rol del usuario*/
@@ -168,6 +238,22 @@ export default function UserProfileOrg() {
     {/* Agrega más intereses según sea necesario */}
   </View>
 </View>
+        {/* Sección: "Mis Eventos" */}
+        <View style={styles.misEventosContainer}>
+          <Text style={styles.misEventosTitle}>Mis Eventos:</Text>
+          <FlatList
+            data={eventos}
+            horizontal={true} // Deslizamiento horizontal
+            showsHorizontalScrollIndicator={false} // Ocultar la barra de desplazamiento
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.eventoContainer}>
+                <Image source={{ uri: item.banner }} style={styles.eventoImage} />
+                <Text style={styles.eventoNombre}>{item.nombre}</Text>
+              </View>
+            )}
+          />
+        </View>
     </ScrollView>
   );
 }
@@ -221,7 +307,7 @@ profileImage: {
   name: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'black',
+    color: '#333',
   },
 roleContainer: {
   backgroundColor: 'rgb(80, 140, 100)',
@@ -238,7 +324,7 @@ roleContainer: {
   },
   aboutme: {
     fontSize: 17,
-    color: 'black',
+    color: '#333',
     fontWeight: 'bold',
   },
   descriptionContainer: {
@@ -270,8 +356,9 @@ roleContainer: {
   interesesTitle: {
     fontSize: 19,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 12,
     marginLeft: 20,
+    color: '#333',
   },
   interesesContent: {
     flexDirection: 'row',
@@ -339,5 +426,48 @@ estrellasContainer: {
     fontWeight: 'bold',
     color: 'white', // Cambia el color del texto del botón según tu diseño
   },
+  // Estilos para la sección "Mis Eventos"
+misEventosContainer: {
+  marginVertical: 10,
+  paddingLeft: 10,
+  paddingRight: 0,
+},
+
+ misEventosTitle: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    color: '#333',
+    marginLeft: 10,
+    marginBottom: 12,
+  },
+eventoContainer: {
+  marginLeft: 10,
+  marginHorizontal: 5, // Espaciado horizontal reducido para evitar demasiado espacio entre tarjetas
+  width: 160, // Ancho ligeramente reducido
+  borderRadius: 15, // Esquinas más redondeadas
+  borderWidth: 0.4,
+  borderColor: '#ccc',
+  shadowColor: '#000', // Sombra negra
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 6,
+  elevation: 3, // Elevación para Android para efecto de sombra
+  overflow: 'hidden', // Mantiene las imágenes dentro de las esquinas redondeadas
+  
+},
+
+eventoImage: {
+  width: '100%',
+  height: 120, // Altura ajustada para mantener la relación de aspecto
+  resizeMode: 'cover', // Asegura que la imagen cubra el área sin distorsión
+},
+
+eventoNombre: {
+  padding: 8, // Padding reducido para más espacio de imagen
+  fontSize: 14, // Tamaño de fuente ligeramente reducido
+  fontWeight: '500', // Menos pesado que 'bold'
+  textAlign: 'center',
+  color: 'black', // Color ligeramente más suave que el negro
+ },
 });
 

@@ -1,13 +1,19 @@
 from app import app, dynamodb
 from flask import jsonify, request
+import boto3
 from boto3.dynamodb.conditions import Key
 import hashlib
 import uuid
 from flask_jwt_extended import create_access_token, get_jwt_identity,get_jwt, jwt_required
-from decimal import Decimal
-
+import decimal
+from decimal import Decimal, getcontext, Inexact, Rounded, ROUND_HALF_UP
+from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.types import DYNAMODB_CONTEXT
 import re
 from bs4 import BeautifulSoup
+
+# Establecer el contexto para obtener 1 dígito de precisión decimal
+getcontext().prec = 2
 
 def sanitize_text(text, max_length=500):
     # 1. Escape de caracteres especiales
@@ -48,6 +54,7 @@ def register():
         email = request.json['email']
         contrasena = request.json['contrasena']
         genero = request.json['genero']
+        descripcion = request.json['descripcion']
         print("Llamado al register")
 
         # Definir imágenes predeterminadas basadas en el rol y el género
@@ -71,7 +78,7 @@ def register():
                 'apellidos':apellidos,
                 'b_date':b_date,
                 'ciudad': None,
-                'descripcion':None,
+                'descripcion':descripcion,
                 'email':email,
                 'contrasena': hashlib.sha256(contrasena.encode()).hexdigest(),
                 'genero':genero,
@@ -90,7 +97,7 @@ def register():
                 'nombres':nombre,
                 'apellidos':apellidos,
                 'b_date':b_date,
-                'descripcion':None,
+                'descripcion':descripcion,
                 'asosiacion':None,
                 'email':email,
                 'contrasena': hashlib.sha256(contrasena.encode()).hexdigest(),
@@ -290,7 +297,94 @@ def create_event():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+#METODO PARA ACTUALIZAR LAS ESTRELLAS EN LOS EVENTOS:
+@app.route('/rate_event', methods=['POST'])
+@jwt_required()
+def rate_event():
+
+    DYNAMODB_CONTEXT.prec = 2
+    DYNAMODB_CONTEXT.rounding = ROUND_HALF_UP
+    DYNAMODB_CONTEXT.traps[Inexact] = False
+    DYNAMODB_CONTEXT.traps[Rounded] = False
     
+    try:
+        current_user_id = get_jwt_identity()
+        event_id = request.json.get('event_id', '')
+        user_rating = Decimal(request.json.get('rating', '0.0'))  # Acepta decimales
+
+        # Verifica que user_rating sea un Decimal válido
+        if not isinstance(user_rating, Decimal):
+            raise TypeError("La puntuación debe ser un número decimal.")
+
+        # Asegúrate de que la calificación está en el rango permitido
+        if user_rating < Decimal('0') or user_rating > Decimal('5'):
+            return jsonify({'error': 'La calificación debe estar entre 0 y 5'}), 400
+
+        table = dynamodb.Table('eventos')
+
+        # Recupera el evento de la base de datos
+        response = table.get_item(Key={'id': event_id})
+        event = response.get('Item', {})
+
+        if not event:
+            return jsonify({'error': 'Event not found'}), 404
+
+        # Aquí asumimos que tienes una lista de todas las puntuaciones para ese evento
+        if 'ratings' not in event:
+            event['ratings'] = []
+
+
+        # Añade la nueva calificación a la lista de calificaciones del evento
+        event['ratings'].append(user_rating)
+        # Calcula el promedio de las calificaciones
+        total_ratings = sum(event['ratings'], Decimal('0'))
+        average = total_ratings / len(event['ratings'])
+        # Redondea el promedio a un solo decimal, asegurándose de que no exceda el máximo
+        new_average = min(average.quantize(Decimal('0.0'), rounding=ROUND_HALF_UP), Decimal('5'))
+
+
+
+        # Actualiza el evento con la nueva media de puntuación
+        update_response = table.update_item(
+            Key={'id': event_id},
+            UpdateExpression="SET puntaje = :val, ratings = :ratings",
+            ExpressionAttributeValues={
+                ':val': new_average,
+                ':ratings': event['ratings']
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+
+        return jsonify({'message': 'Rating updated successfully', 'new_average': str(new_average)}), 200
+    
+    except decimal.Inexact as e:
+        app.logger.error(f"Error inexacto al procesar la puntuación: {e}")
+        return jsonify({'error': 'Error inexacto al procesar la puntuación'}), 500
+    except decimal.Rounded as e:
+        app.logger.error(f"Error de redondeo al procesar la puntuación: {e}")
+        return jsonify({'error': 'Error de redondeo al procesar la puntuación'}), 500
+    except Exception as e:
+        # Imprime la excepción en el log del servidor
+        app.logger.exception("Se produjo un error al procesar la puntuación")
+        # Devuelve un mensaje de error genérico al cliente
+        return jsonify({'error': 'Se produjo un error interno del servidor'}), 500
+    
+
+@app.route('/get_events_by_organizer', methods=['GET'])
+@jwt_required()
+def get_events_by_organizer():
+    current_user_id = get_jwt_identity()
+    try:
+        table = dynamodb.Table('eventos')
+        response = table.scan(FilterExpression=Attr('id_organizador').eq(current_user_id))
+        events = response['Items']
+
+        return jsonify(events), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/listEvents', methods=['GET'])
 @jwt_required()
