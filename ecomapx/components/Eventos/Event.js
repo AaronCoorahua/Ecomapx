@@ -1,8 +1,12 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView, Alert, Modal,TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
+import distritosSecurity from '../../assets/data/distritos.json';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {Rating} from 'react-native-ratings';
+import {FontAwesome} from '@expo/vector-icons';
 
 const getSecurityIconColor = (securityLevel) => {
     if (securityLevel <= 3) {
@@ -13,6 +17,20 @@ const getSecurityIconColor = (securityLevel) => {
         return 'red';
     }
 };
+
+const StarDisplay = ({ new_average }) => {
+    console.log('Tipo de new_average:', typeof new_average);
+    console.log('Valor de new_average:', new_average);
+    // Verificar que new_average es un número y está definido
+    const displayValue = typeof new_average === 'number' ? new_average.toFixed(1) : '0.0';
+
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <FontAwesome name="star" size={30} color="#ffd700" />
+        <Text>{displayValue} / 5</Text>
+      </View>
+    );
+  };
 
 const Event = ({ route }) => {
     const navigation = useNavigation();
@@ -125,13 +143,39 @@ const Event = ({ route }) => {
             <Text style={styles.status}>{event.status}</Text>
             <Text style={styles.review}>Reseñas: {event.resenas}</Text>
             <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
+            <View style={styles.ratingContainer}>
+                <StarDisplay new_average={starCount} />
+                <TouchableOpacity style={styles.rateButton} onPress={openModalToRate}>
+                    <Text>Puntuar</Text>
+                </TouchableOpacity>
+            </View>
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.centeredView}>
+                    <View style={styles.modalView}>
+                        <Rating
+                            ratingCount={5}
+                            startingValue={tempStarCount}
+                            onFinishRating={(rating) => onStarRatingPress(rating)}
+                            tintColor="#fff" // Puedes cambiar el color del fondo si lo necesitas
+                            imageSize={40} // Tamaño de la estrella
+                            fractions={1} // Esto permite valores decimales si deseas precisión hasta la mitad de una estrella
+                        />
+                        <Button title="Confirmar Puntuación" onPress={submitRating} />
+                    </View>
+                </View>
+            </Modal>
             <MapView
             style={styles.map}
             region={{
                 latitude: parseFloat(event.coordenadas.latitude),
                 longitude: parseFloat(event.coordenadas.longitude),
-                latitudeDelta: 0.8,
-                longitudeDelta: 0.8,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
             }}
             scrollEnabled={true}
             zoomEnabled={true}
@@ -226,6 +270,45 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 200,
         marginTop: 20,
+    },
+    securityIcon: {
+        position: 'absolute',
+        top: 800,
+        left: 25,
+        zIndex: 1,
+    },
+    nuevo: {
+        marginTop: 20,
+    },
+    ratingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        // ... otros estilos para el contenedor de puntuación ...
+    },
+    rateButton: {
+        // ... estilos para tu botón de puntuar ...
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 22,
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
     },
 });
 
