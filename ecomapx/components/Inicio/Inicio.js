@@ -6,26 +6,16 @@ export default function Inicio() {
   const navigation = useNavigation(); // Paso 2
 
   const [showLogo, setShowLogo] = useState(true);
-  const [showText, setShowText] = useState(false);
+
 
   useEffect(() => {
     const logoTimer = setTimeout(() => {
-      setShowLogo(false);
+      setShowLogo(true);
+      navigation.navigate('Homes')
     }, 2500);
-
-    const textTimer = setTimeout(() => {
-      setShowText(true);
-    }, 5000);
-
-    // Paso 3: Redireccionar después de un total de 7.5 segundos
-    const redirectTimer = setTimeout(() => {
-      navigation.navigate('Homes');
-    }, 7500);
 
     return () => {
       clearTimeout(logoTimer);
-      clearTimeout(textTimer);
-      clearTimeout(redirectTimer);
     };
   }, [navigation]);
 
@@ -36,14 +26,6 @@ export default function Inicio() {
           source={require('../../assets/logo2.png')} 
           style={styles.logo}
         />
-      )}
-
-      {showText && (
-        <Text style={styles.welcomeText}>¡Bienvenid@!</Text>
-      )}
-
-      {!showLogo && !showText && (
-        <Text style={styles.redirectText}>Redireccionando a la página de inicio de sesión...😀</Text>
       )}
     </View>
   );
