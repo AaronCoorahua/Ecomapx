@@ -448,6 +448,8 @@ def add_crime():
         data = request.json
         crime_id = str(uuid.uuid4())
         coordenadas = data.get('coordenadas', {})
+        coordenadas['latitude'] = Decimal(coordenadas['latitude'])
+        coordenadas['longitude'] = Decimal(coordenadas['longitude'])
         tipo = data.get('tipo', '')
         detalles = data.get('detalles', '')
 
@@ -456,7 +458,7 @@ def add_crime():
             return jsonify({'error': 'Coordenadas y Tipo son campos obligatorios'}), 400
 
         item = {
-            'crime_id': crime_id,
+            'id': crime_id,
             'user_id': user_id,
             'coordenadas': coordenadas,
             'tipo': tipo,

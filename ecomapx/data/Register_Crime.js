@@ -34,26 +34,33 @@ export default function RegisterCrime() {
 
   const handleRegisterCrime = async () => {
     // Obtener el ID del usuario autenticado del almacenamiento local o del contexto de autenticación
-    const authenticatedUserId = await AsyncStorage.getItem('userId'); // Asegúrate de cambiar 'userId' por la clave correcta que usas en tu AsyncStorage
-    setUserId(authenticatedUserId);
-
+    const authenticatedUserId = await AsyncStorage.getItem('userId'); // Asegúrate de que esta clave sea la correcta
+    // No necesitas llamar a setUserId aquí, ya que sólo lo usarás para la petición POST
+  
     if (!crimeType || !details) {
       Alert.alert('Error', 'Por favor, selecciona un tipo de crimen e ingresa los detalles.');
       return;
     }
-
+  
+    // Asegúrate de que las coordenadas sean un objeto con las propiedades latitude y longitude
+    const formattedCoordinates = {
+      latitude: marker.latitude,
+      longitude: marker.longitude,
+    };
+  
     try {
       const token = await AsyncStorage.getItem('userToken');
       const crimeData = {
+        user_id: authenticatedUserId, // Este campo no es necesario enviarlo si en el backend se obtiene del token JWT
         coordenadas: {
-          latitude: marker.latitude,
-          longitude: marker.longitude,
+          latitude: marker.latitude.toString(),
+          longitude: marker.longitude.toString(),
         },
         tipo: crimeType,
         detalles: details,
       };
-
-      const response = await fetch('http://192.168.0.16:5000/add_crime', {
+  
+      const response = await fetch('http://192.168.3.4:5000/add_crime', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,17 +68,21 @@ export default function RegisterCrime() {
         },
         body: JSON.stringify(crimeData),
       });
-
+  
+      const data = await response.json(); // Primero obtén la respuesta JSON
+  
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        // En lugar de lanzar un error, maneja la respuesta de error adecuadamente
+        console.error('Error al registrar el crimen:', data);
+        Alert.alert('Error al registrar el crimen', data.error || 'Ocurrió un error desconocido');
+        return;
       }
-
-      const data = await response.json();
+  
       Alert.alert('Éxito', 'Crimen registrado exitosamente');
-      navigation.goBack(); // Ajusta esto según tu lógica de navegación
+      navigation.goBack(); // Regresar a la pantalla anterior
     } catch (error) {
-      Alert.alert('Error', 'Hubo un error al registrar el crimen.');
       console.error('Error al registrar el crimen:', error);
+      Alert.alert('Error', `Error al registrar el crimen: ${error}`);
     }
   };
 
