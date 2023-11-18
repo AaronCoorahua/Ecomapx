@@ -5,8 +5,11 @@ import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
 import distritosSecurity from '../../data/distritos.json';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {Rating} from 'react-native-ratings';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import {Rating, AirbnbRating } from 'react-native-ratings';
 import {FontAwesome} from '@expo/vector-icons';
+
 
 const getSecurityIconColor = (securityLevel) => {
     if (securityLevel <= 3) {
@@ -25,11 +28,12 @@ const StarDisplay = ({ new_average }) => {
     const displayValue = typeof new_average === 'number' ? new_average.toFixed(1) : '0.0';
 
     return (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <FontAwesome name="star" size={30} color="#ffd700" />
-        <Text>{displayValue} / 5</Text>
-      </View>
-    );
+        <View style={styles.starDisplayContainer}>
+          <AntDesign name="star" size={28.5} color="#FFD700" style={styles.starIcon} />
+          <Text style={styles.ratingText}>{displayValue}</Text>
+          <Text style={styles.ratingOutOf}>/ 5</Text>
+        </View>
+      );
   };
 
 const Event = ({ route }) => {
@@ -81,7 +85,7 @@ const Event = ({ route }) => {
     
             console.log('Puntuación seleccionada por el usuario:', tempStarCount);
     
-            const response = await fetch('http://192.168.3.4:5000/rate_event', {
+            const response = await fetch('http://192.168.0.16:5000/rate_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -145,9 +149,13 @@ const Event = ({ route }) => {
             <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
             <View style={styles.ratingContainer}>
                 <StarDisplay new_average={starCount} />
-                <TouchableOpacity style={styles.rateButton} onPress={openModalToRate}>
-                    <Text>Puntuar</Text>
+                <TouchableOpacity style={[styles.rateButton]} onPress={openModalToRate}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14}}>
+                <FontAwesome5 name="star" size={21.6} color="#2268D6" marginRight={5}/>
+                <Text style={{ color: '#2268D6', fontSize:17}}>Puntuar</Text>
+                </View>
                 </TouchableOpacity>
+               
             </View>
             <Modal
                 animationType="slide"
@@ -157,15 +165,24 @@ const Event = ({ route }) => {
             >
                 <View style={styles.centeredView}>
                     <View style={styles.modalView}>
+                        <TouchableOpacity 
+                          style={styles.closeButton}
+                          onPress={() => setModalVisible(false)}
+                        >
+                        <AntDesign name="closecircle" size={24} color="black" />
+                        </TouchableOpacity>
                         <Rating
+                            type='star'
                             ratingCount={5}
+                            imageSize={40}
+                            showRating
                             startingValue={tempStarCount}
-                            onFinishRating={(rating) => onStarRatingPress(rating)}
-                            tintColor="#fff" // Puedes cambiar el color del fondo si lo necesitas
-                            imageSize={40} // Tamaño de la estrella
-                            fractions={1} // Esto permite valores decimales si deseas precisión hasta la mitad de una estrella
+                            onFinishRating={onStarRatingPress}
+                            fractions={1}
                         />
-                        <Button title="Confirmar Puntuación" onPress={submitRating} />
+                        <TouchableOpacity style={styles.openButton} onPress={submitRating}>
+                            <Text style={styles.textStyle}>Confirmar Puntuación</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
@@ -199,6 +216,62 @@ const Event = ({ route }) => {
 }
 
 const styles = StyleSheet.create({
+    centeredView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 22,
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+        width: 0,
+        height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5
+    },
+    openButton: {
+        backgroundColor: '#F194FF',
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2,
+        marginTop: 20,
+    },
+    textStyle: {
+        color: 'white',
+        fontWeight: 'bold',
+        textAlign: 'center'
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 10,
+        right: 10
+    },
+    starDisplayContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 15, // Ajusta esto según sea necesario
+    },
+    starIcon: {
+        marginRight: 7, // Ajusta el espacio entre la estrella y el texto
+    },
+    ratingText: {
+        fontSize: 22, // Ajusta esto según sea necesario para que coincida con el tamaño de la primera foto
+        color: '#333', // Esto hará que el texto sea negro
+        marginRight: 2.8, // Pequeño espacio entre la puntuación y el '/ 5'
+    },
+    ratingOutOf: {
+        fontSize: 17.5, // Más pequeño que la puntuación
+        color: '#666',
+        // Si necesitas ajustar el estilo del '/ 5' por separado, hazlo aquí
+    },
     container: {
         flex: 1,
     },
@@ -214,7 +287,7 @@ const styles = StyleSheet.create({
     userId: {
         fontSize: 14,
         color: 'grey',
-        marginTop: 10,
+        marginTop: -3,
     },
     title: {
         fontSize: 24,
@@ -223,10 +296,11 @@ const styles = StyleSheet.create({
     },
     location: {
         fontSize: 18,
+        marginTop: 8,
     },
     description: {
         fontSize: 16,
-        marginTop: 15,
+        marginTop: 8,
     },
     detail: {
         fontSize: 16,
@@ -239,7 +313,7 @@ const styles = StyleSheet.create({
     },
     capacity: {
         fontSize: 16,
-        marginTop: 10,
+        marginTop: -38,
     },
     duration: {
         fontSize: 16,
@@ -288,27 +362,6 @@ const styles = StyleSheet.create({
     },
     rateButton: {
         // ... estilos para tu botón de puntuar ...
-    },
-    centeredView: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 22,
-    },
-    modalView: {
-        margin: 20,
-        backgroundColor: 'white',
-        borderRadius: 20,
-        padding: 35,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5
     },
 });
 
