@@ -434,4 +434,38 @@ def add_review():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+#------------------------
+#METODOS DATACRIME
+#------------------------
+
+@app.route('/add_crime', methods=['POST'])
+@jwt_required()
+def add_crime():
+    try:
+
+        user_id = get_jwt_identity()
+        data = request.json
+        crime_id = str(uuid.uuid4())
+        coordenadas = data.get('coordenadas', {})
+        tipo = data.get('tipo', '')
+        detalles = data.get('detalles', '')
+
+        # Validar que los datos requeridos no estén vacíos
+        if not (coordenadas and tipo):
+            return jsonify({'error': 'Coordenadas y Tipo son campos obligatorios'}), 400
+
+        item = {
+            'crime_id': crime_id,
+            'user_id': user_id,
+            'coordenadas': coordenadas,
+            'tipo': tipo,
+            'detalles': detalles
+        }
+        table = dynamodb.Table('datacrime')
+        table.put_item(Item=item)
+
+        return jsonify({'message': 'Crimen agregado exitosamente'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
-import distritosSecurity from '../../assets/data/distritos.json';
+import distritosSecurity from '../../data/distritos.json';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {Rating} from 'react-native-ratings';
 import {FontAwesome} from '@expo/vector-icons';
