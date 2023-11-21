@@ -210,7 +210,7 @@ export default function UserProfileOrg() {
           }
     
           // Cargar perfil del usuario
-          const userProfileResponse = await fetch('http://192.168.0.17:5000/get_user_profile', {
+          const userProfileResponse = await fetch('http://192.168.3.4:5000/get_user_profile', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',

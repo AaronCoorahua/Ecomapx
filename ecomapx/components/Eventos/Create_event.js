@@ -16,6 +16,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
 
+
+
+
 export default function CreateEvent() {
   const [puntaje, setPuntaje] = useState(0); // Asumiendo que puntaje es opcional y puede ser cero por defecto
   const [status, setStatus] = useState('Por Empezar'); 
