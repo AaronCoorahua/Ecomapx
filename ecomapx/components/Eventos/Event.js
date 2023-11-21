@@ -74,6 +74,37 @@ const Event = ({ route }) => {
         setModalVisible(true);
     };
 
+    // Función para actualizar el promedio del ecoorganizador
+    const updateOrganizerAverage = async () => {
+        try {
+          const token = await AsyncStorage.getItem('userToken');
+          if (!token) {
+            Alert.alert('Error', 'No se encontró el token de autenticación.');
+            return;
+          }
+  
+          const response = await fetch('http://192.168.0.17:5000/update_organizer_average', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            // No es necesario enviar un cuerpo (body) si el cálculo se realiza en el backend
+          });
+  
+          const responseData = await response.json();
+  
+          if (response.ok) {
+            // Actualiza el estado o UI si es necesario
+            Alert.alert('Éxito', 'Promedio actualizado correctamente.');
+          } else {
+            Alert.alert('Error', responseData.error || 'Error al actualizar el promedio.');
+          }
+        } catch (error) {
+          console.error('Error al actualizar el promedio:', error);
+          Alert.alert('Error', 'No se pudo conectar al servidor para actualizar el promedio.');
+        }
+    };
 
     const submitRating = async () => {
         try {
@@ -85,7 +116,7 @@ const Event = ({ route }) => {
     
             console.log('Puntuación seleccionada por el usuario:', tempStarCount);
     
-            const response = await fetch('http://192.168.0.16:5000/rate_event', {
+            const response = await fetch('http://192.168.0.17:5000/rate_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -104,9 +135,11 @@ const Event = ({ route }) => {
                 setStarCount(newAverage); // Actualiza el estado con el nuevo promedio
                 await AsyncStorage.setItem(`starCount-${event.id}`, newAverage.toString()); // Guarda el nuevo promedio como una cadena
                 Alert.alert('Éxito', 'Puntuación actualizada correctamente');
+                // Ahora llama a la función para actualizar el promedio del ecoorganizador
+                await updateOrganizerAverage(); // Esta función se debe definir o importar en Event.js
             } else {
                 // Si la respuesta no fue exitosa, maneja el error
-                Alert.alert('Error', responseData.error || 'Error al enviar la puntuación');
+                Alert.alert('Error al enviar la puntuación');
             }
         } catch (error) {
             // Si hubo un error en la solicitud o al procesar la respuesta
@@ -238,7 +271,7 @@ const styles = StyleSheet.create({
         elevation: 5
     },
     openButton: {
-        backgroundColor: '#F194FF',
+        backgroundColor: '#47897E', //cambio de color "Confirmar" en Puntuar
         borderRadius: 20,
         padding: 10,
         elevation: 2,

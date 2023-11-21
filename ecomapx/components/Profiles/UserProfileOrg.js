@@ -1,10 +1,17 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, FlatList } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, FlatList, ActivityIndicator, Alert} from 'react-native';
 import RedesSocialesIcon from '../../assets/redes-sociales.png';
 import localImage from '../../assets/estrella.png';
 import { useNavigation } from '@react-navigation/native'; // Importa useNavigation
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
+import { Rating } from 'react-native-ratings';
+import AntDesign from 'react-native-vector-icons/MaterialCommunityIcons';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import * as ImagePicker from 'expo-image-picker';
+// Importaciones para Firebase:
+import { storage } from '../config/firebaseConfig'; 
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const eventos = [
   { id: '1', nombre: 'Evento 1', imagen: 'https://media.discordapp.net/attachments/952775750728155136/1161508511394566174/image.png?ex=65388e18&is=65261918&hm=ca6ecb69096dbc6aca2b9f1d434147f578b6fd40e92ee36bd68be61ddc649609&=' },
@@ -29,57 +36,170 @@ const user1 = {
 
 const bannerImage = 'https://media.discordapp.net/attachments/1015053042959265802/1159934655043219546/pngtree-hilarious-3d-gorilla-cartoon-pumping-iron-image_3813702.png?ex=6532d454&is=65205f54&hm=764140bfb6a3da54692bda045156ab0831c6bca4b9cd318ffb5bc780fcba9ef3';
 
-const medalla1 = 'https://media.discordapp.net/attachments/1155323431915630594/1160134137886289920/image.png?ex=65338e1c&is=6521191c&hm=c029ab5d594426fbda753bdaf7b8669d969f22fb03ba6e35f91c83a10e390095&=';
-const medalla2 = 'https://media.discordapp.net/attachments/1155323431915630594/1160134014980608060/image.png?ex=65338dff&is=652118ff&hm=65fbe72bd8398af6a6d3263525e22b49b7b78fb413ca51a9bd25ba17740823c3&=';
+
+//MEDALLAS DEVERITAS:
+
+const ecoPioneroMedal = "https://media.discordapp.net/attachments/1155323431915630594/1176299753630335136/image.png?ex=656e5d83&is=655be883&hm=507c348dca67b1c5d2d7e1553b20d9f690deaaafbdbff45de497419cddf1a072&=";
+const cincoEstrellasMedal = "https://media.discordapp.net/attachments/1155323431915630594/1176300149274845305/image.png?ex=656e5de2&is=655be8e2&hm=bf8088f5ad9f9e446e13ead08643e5043e983af23133b3320cddcfbfe977f33b&=";
+const diezEventosMedal = "https://media.discordapp.net/attachments/1155323431915630594/1176271498466566174/image.png";
+const ecoLiderMedal = "https://media.discordapp.net/attachments/1155323431915630594/1176271548353617990/image.png";
+
 
 // Lista de intereses
 const interes1 = 'https://media.discordapp.net/attachments/952775750728155136/1161435237075656704/montana.png?ex=653849da&is=6525d4da&hm=8780d957d9b6b2bb5289227f94a35776e573703c6c903b901510d69f6c42f7a1&=&width=423&height=423';
 const interes2 = 'https://media.discordapp.net/attachments/952775750728155136/1161435260253372507/reciclar-senal.png?ex=653849e0&is=6525d4e0&hm=59e605288ece681af3f60348e92856c8b60585612cc0bf31440de50af6ec3885&=&width=423&height=423';
+
+
+const MedalsDisplay = ({ user, eventsData }) => {
+  const showEcoPioneroMedal = user.created_events && user.created_events.length >= 1; //Medalla x crear su primer evento - Funciona :)
+  const showCincoEstrellasMedal = user.haAlcanzadoCincoEstrellas; //alcanzo 5 estrellas en su perfil de ecoorganizador (puntaje del ecoorganizador) - Funciona
+  const showDiezEventosMedal = user.created_events && user.created_events.length >= 10; //Creo 10 o + eventos - Funciona :)
+
+  // La medalla de EcoLíder requiere verificar el promedio de cada evento y que haya al menos 10 eventos - Funciona :)
+  let showEcoLiderMedal = false;
+  if (user.created_events && user.created_events.length >= 10) {
+    showEcoLiderMedal = eventsData.every(evento => evento.puntaje >= 3 && evento.puntaje <= 5);
+  }
+  return (
+    <>
+      {showEcoPioneroMedal && (
+        <View style={styles.medal}>
+          <Image source={{ uri: ecoPioneroMedal }} style={styles.medalImage} />
+          <Text style={styles.medalTitle}>Medalla Ecopionero</Text>
+        </View>
+      )}
+      {showCincoEstrellasMedal && (
+        <View style={styles.medal}>
+          <Image source={{ uri: cincoEstrellasMedal }} style={styles.medalImage} />
+          <Text style={styles.medalTitle}>Medalla 5 estrellas</Text>
+        </View>
+      )}
+      {showDiezEventosMedal && (
+        <View style={styles.medal}>
+          <Image source={{ uri: diezEventosMedal }} style={styles.medalImage} />
+          <Text style={styles.medalTitle}>Medalla 10 Eventos</Text>
+        </View>
+      )}
+      {showEcoLiderMedal && (
+        <View style={styles.medal}>
+          <Image source={{ uri: ecoLiderMedal }} style={styles.medalImage} />
+          <Text style={styles.medalTitle}>Medalla EcoLider</Text>
+        </View>
+      )}
+      {/* Repite la lógica para las otras medallas */}
+    </>
+  );
+};
+
+
+const updatePhoto = async (userId, userType, newPhotoUrl, token) => {
+  try {
+    const response = await fetch('http://192.168.0.17:5000/update_photo', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        photo: newPhotoUrl, // La nueva URL de la foto
+        userType: userType, // El rol del usuario (ecobuscador o ecoorganizador)
+      }),
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      Alert.alert('Éxito', 'Foto actualizada correctamente');
+      return { success: true, photo: newPhotoUrl };
+    } else {
+      console.error('Error response:', responseData);
+      Alert.alert('Error', responseData.error || 'Error al actualizar la foto');
+      return { success: false, error: responseData.error || 'Error desconocido' };
+    }
+  } catch (error) {
+    console.error('Error al actualizar la foto:', error);
+    Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+    return { success: false, error: error.toString() };
+  }
+};
+
+// Este es tu componente de perfil
+const ProfileComponent = ({ user }) => {
+  // Este estado mantendrá la URL de la foto de perfil actual
+  const [profilePhoto, setProfilePhoto] = useState(user.foto);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Este manejador se activará cuando el usuario quiera cambiar su foto de perfil
+
+  const handleEditPhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Sorry, we need camera roll permissions to make this work!');
+        return;
+      }
+  
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setIsUploading(true); // Indicador de carga
+        const uri = result.assets[0].uri;
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const imageName = `profile_${user.id}_${new Date().toISOString()}.jpg`;
+        const imageRef = ref(storage, `images/${imageName}`);
+
+        await uploadBytes(imageRef, blob);
+        const downloadURL = await getDownloadURL(imageRef);
+        console.log("DOWNLOAD",downloadURL);
+        setProfilePhoto(downloadURL);
+        const token = await AsyncStorage.getItem('userToken');
+        // Llama a la función updatePhoto con todos los argumentos necesarios
+        const updateResult = await updatePhoto(user.id, user.rol, downloadURL, token);
+        console.log('VEAMOS:', updateResult);
+        console.log('foto URL:', updateResult.photo);
+        if (updateResult.success) {
+          //console.log('Perfil actualizado:', updateResult.profile_updated);
+          console.log('Perfil actualizado con la nueva foto URL:', updateResult.photo);
+        } else {
+          throw new Error(updateResult.error || 'Error al actualizar el perfil.');
+        }
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'An error occurred while picking the image.');
+    } finally {
+      setIsUploading(false); // Finaliza el indicador de carga
+    }
+  };
+
+  return (
+    <View style={styles.profileContainer}>
+    {isUploading ? (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#CFD8DC" />
+      </View>
+    ) : (
+      <Image source={{ uri: profilePhoto }} style={styles.profileImage} />
+    )}
+      <TouchableOpacity style={styles.editIcon} onPress={handleEditPhoto}>
+        <FontAwesome5 name="pencil-alt" size={15} color="white" style={styles.iconStyle}/>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 
 export default function UserProfileOrg() {
 
   const [user, setUser] = useState(null);
   const [eventos, setEventos] = useState([]);
 
-/*
-    useEffect(() => {
-      // Función para recuperar el perfil del usuario
-      const fetchUserProfile = async () => {
-        try {
-          const token = await AsyncStorage.getItem('userToken');
-    
-          if (!token) {
-            Alert.alert('Error', 'No se encontró el token de autenticación.');
-            return;
-          }
-    
-          const response = await fetch('http://192.168.3.4:5000/get_user_profile', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          });
-    
-          const data = await response.json();
-    
-          // Imprime la respuesta en la consola
-          console.log('Perfil del usuario:', data);
-    
-          if (response.status === 200) {
-            setUser(data);
-          } else {
-            Alert.alert('Error', data.error || 'Error al obtener el perfil de usuario.');
-          }
-        } catch (error) {
-          console.error('Error fetching user profile:', error);
-          Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
-        }
-      };
-    
-      fetchUserProfile();
-    }, []);
-*/
     useEffect(() => {
       const fetchUserProfileAndEvents = async () => {
         try {
@@ -90,7 +210,7 @@ export default function UserProfileOrg() {
           }
     
           // Cargar perfil del usuario
-          const userProfileResponse = await fetch('http://192.168.0.16:5000/get_user_profile', {
+          const userProfileResponse = await fetch('http://192.168.0.17:5000/get_user_profile', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -105,13 +225,29 @@ export default function UserProfileOrg() {
           
           if (userProfileResponse.status === 200) {
             setUser(userData);
-          } else {
-            Alert.alert('Error', userData.error || 'Error al obtener el perfil de usuario.');
-            return;
-          }
-    
+             // Si es un ecoorganizador, carga su calificación promedio
+                if (userData.rol === 'ecoorganizador') {
+                  const ratingResponse = await fetch(`http://192.168.0.17:5000/get_organizer_rating/${userData.id}`, {
+                    method: 'GET',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                    },
+                  });
+                  const ratingData = await ratingResponse.json();
+                  if (ratingResponse.ok) {
+                    console.log('Calificación promedio del organizador:', ratingData.promedio);
+                    // Aquí puedes actualizar el estado o UI con el promedio
+                  } else {
+                    Alert.alert('Error', ratingData.error || 'Error al obtener la calificación del organizador.');
+                  }
+                }
+              } else {
+                Alert.alert('Error', userData.error || 'Error al obtener el perfil de usuario.');
+                return;
+              }
+
           // Cargar eventos
-          const eventsResponse = await fetch('http://192.168.0.16:5000/get_events_by_organizer', {
+          const eventsResponse = await fetch('http://192.168.0.17:5000/get_events_by_organizer', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -137,6 +273,7 @@ export default function UserProfileOrg() {
     
       fetchUserProfileAndEvents();
     }, []);
+
         
     /* Luego descomentar, ahorita solo quiero probar si funciona bien el redireccionamiento segun el rol del usuario*/
     if (!user) {
@@ -148,35 +285,16 @@ export default function UserProfileOrg() {
     navigation.navigate('CreateEvents');
   }
   */
+ console.log("PROMEDIO DEL ORGANIZADOR: ", user.promedio); //ASI ACCEDO AL PROMEDIO (LO PROBE Y FUNCIONA ME TIRA 3.8 nasheee)
+
   return (
     <ScrollView style={styles.container}>
 
       {/* Banner de fondo */}
       <Image source={{ uri: bannerImage }} style={styles.bannerImage} />
 
-      {/* Contenedor para las estrellas (en el lado derecho superior) */}
-      <View style={styles.estrellasContainer}>
-        <Image source={localImage} style={styles.estrella} />
-        <Image source={localImage} style={styles.estrella} />
-        <Image source={localImage} style={styles.estrella} />
-        {/* Agrega más estrellas según sea necesario */}
-      </View>
- {/*
-      <TouchableOpacity
-        style={styles.createEventButton}
-        onPress={handleCreateEventClick}
-      >
-        <Text style={styles.createEventButtonText}>Create Event</Text>
-      </TouchableOpacity>
-*/}
       {/* Contenedor para la imagen de perfil */}
-      <View style={styles.profileContainer}>
-        {/* Imagen de perfil */}
-        <Image
-          source={{ uri: user.foto }}
-          style={styles.profileImage}
-        />
-      </View>
+      <ProfileComponent user={user} />
 
       {/* Contenedor principal de texto */}
       <View style={styles.nuevo}>
@@ -193,7 +311,14 @@ export default function UserProfileOrg() {
           {user.rol === 'ecoorganizador' ? 'Eco-Organizador' : user.rol}
           </Text>
         </View>
+
+        {/* Contenedor de las estrella */}
+        <View style={styles.estrellasContainer}>
+        <AntDesign name="star-circle" size={25} color="gold" style={styles.estrellaIcon}/>
+        <Text style={styles.text_prom}> {user.promedio}</Text>
         </View>
+      </View>
+
         <View style={styles.textContainer}>
         {/* Contenedor de la sección "About Me" */}
         <View style={styles.aboutmeContainer}>
@@ -238,6 +363,17 @@ export default function UserProfileOrg() {
     {/* Agrega más intereses según sea necesario */}
   </View>
 </View>
+
+
+    {/* Contenedor de la sección de medallas */}
+    <View style={styles.medalsContainer}>
+      <Text style={styles.medalsTitle}>Medallas:</Text>
+      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.medalsContent}>
+        {/* Aquí usas MedalsDisplay pasando el usuario */}
+        <MedalsDisplay user={user} eventsData={eventos} />
+      </ScrollView>
+    </View>
+
         {/* Sección: "Mis Eventos" */}
         <View style={styles.misEventosContainer}>
           <Text style={styles.misEventosTitle}>Mis Eventos:</Text>
@@ -259,6 +395,77 @@ export default function UserProfileOrg() {
 }
 
 const styles = StyleSheet.create({
+
+  medalsContainer: {
+    marginTop: 5,
+    //backgroundColor: 'pink',
+
+  },
+  medalsTitle: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    marginLeft: 20,
+    color: '#333',
+  },
+  medalsContent: {
+    //flexDirection: 'row',
+    //justifyContent: 'space-between',
+
+  },
+  medal: {
+    alignItems: 'center',
+  },
+  medalImage: {
+    width: 65,
+    height: 65,
+    borderRadius: 32.5,
+    borderWidth: 2,
+    borderColor: 'gold',
+  },
+  medalTitle: {
+    marginTop: 5,
+    fontWeight: 'bold',
+    marginLeft:20,
+    marginRight: 20,
+  },
+  /*Cambie*/
+  editIcon: {
+    // Estilos para el botón que contiene el icono
+    position: 'absolute', // Puedes ajustar la posición según necesites
+    right: 5,
+    bottom: 5,
+    backgroundColor: 'rgb(80, 140, 100)', // Color de fondo del círculo
+    borderRadius: 15, // La mitad del ancho y alto para hacerlo circular
+    width: 30, // Ancho del círculo
+    height: 30, // Alto del círculo
+    justifyContent: 'center', // Centra el icono horizontalmente
+    alignItems: 'center', // Centra el icono verticalmente
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+
+  iconStyle: {
+    // Estilos para el icono en sí
+  },
+  loadingContainer: {
+    width: 124, // Cambia el ancho de la imagen
+    height: 126, // Cambia la altura de la imagen
+    borderRadius: 63, // Asegúrate de que el radio de borde sea la mitad del ancho/altura
+    backgroundColor: 'rgb(57, 168, 88)', // Un color de fondo para el círculo
+    justifyContent: 'center', // Centra el indicador verticalmente
+    alignItems: 'center', // Centra el indicador horizontalmente
+  },
+  text_prom:{
+    fontWeight:'bold',
+    fontSize: 18,
+  },
   nuevo:{
 
     top: 50,
@@ -397,34 +604,24 @@ interes: {
     marginTop: 5,
     fontWeight: 'bold',
   },
-
-estrellasContainer: {
-  position: 'absolute',
-  top: 10, // Ajusta la posición superior para superponer en la parte superior
-  right: 5, // Ajusta la posición derecha para superponer en el lado derecho
-  flexDirection: 'row', // Alinear las estrellas en una fila
-},
-
-  estrella: {
-    width: 25, // Ajusta el tamaño de las estrellas según tus preferencias
-    height: 25,
-    marginRight: 5, // Espacio entre las estrellas
+  estrellasContainer: {
+    flexDirection: 'row',
+    marginTop: 7,
+    alignSelf: 'center',
+    alignItems: 'center', // Asegura la alineación vertical
+    marginLeft: -5,
   },
-    // Estilos para el botón flotante "Create Event"
-  createEventButton: {
-    position: 'absolute',
-    bottom: 65, // Ajusta la posición inferior según tu preferencia
-    backgroundColor: 'green', // Cambia el color del botón según tu paleta de colores
-    borderRadius: 30, // Asegúrate de que el botón sea redondo
-    paddingHorizontal: 20, // Agrega relleno horizontal para el botón
-    paddingVertical: 10, // Agrega relleno vertical para el botón
-    justifyContent: 'center', // Centra verticalmente el ícono
-    alignItems: 'center', // Centra horizontalmente el ícono
+  estrellaIcon: {
+    marginRight: 1, // Espacio entre la estrella y el texto
+    marginTop: 3.4,
   },
-  createEventButtonText: {
-    fontSize: 16,
+  text_prom: {
     fontWeight: 'bold',
-    color: 'white', // Cambia el color del texto del botón según tu diseño
+    fontSize: 18,
+    color: '#333', // Cambia al color que prefieras
+    textShadowColor: 'rgba(0, 0, 0, 0.75)', // Sombra ligera para el texto
+    textShadowRadius: 0.5,
+    marginTop: 1,
   },
   // Estilos para la sección "Mis Eventos"
 misEventosContainer: {
@@ -453,7 +650,6 @@ eventoContainer: {
   shadowRadius: 6,
   elevation: 3, // Elevación para Android para efecto de sombra
   overflow: 'hidden', // Mantiene las imágenes dentro de las esquinas redondeadas
-  
 },
 
 eventoImage: {

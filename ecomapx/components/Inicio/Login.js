@@ -30,7 +30,7 @@ export default function Login({ onSuccessfulLogin }) {
     }
 
     try {
-      const response = await fetch('http://192.168.3.4:5000/login', {
+      const response = await fetch('http://192.168.0.17:5000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -68,7 +68,7 @@ export default function CreateEvent() {
         },
       };
 
-      const response = await fetch('http://192.168.0.16:5000/create_event', {
+      const response = await fetch('http://192.168.0.17:5000/create_event', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

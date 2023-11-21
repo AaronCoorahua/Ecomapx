@@ -1,5 +1,5 @@
 from app import app, dynamodb
-from flask import jsonify, request
+from flask import Flask, request, jsonify
 import boto3
 from boto3.dynamodb.conditions import Key
 import hashlib
@@ -117,7 +117,55 @@ def register():
         return jsonify({'message': f'{userType} registered successfully'}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+#METODO PARA ACTUALIZAR LA FOTO DE PERFIL:
+
+@app.route('/update_photo', methods=['PATCH'])
+@jwt_required()
+def update_photo():
+    try:
+        # Obtén el ID del usuario actual de JWT
+        current_user_id = get_jwt_identity()
+
+        # Obtén el nuevo URL de la foto del cuerpo de la solicitud
+        new_photo_url = request.json.get('photo', '')
+
+        # Valida que el URL de la foto no esté vacío
+        if not new_photo_url:
+            return jsonify({'error': 'Photo URL is required'}), 400
+
+        # Asigna la tabla de DynamoDB según el tipo de usuario
+        # Esto es un ejemplo, deberás ajustar según tu lógica de negocio
+        user_type = request.json.get('userType', '')
+        if user_type == "ecobuscador":
+            table_name = 'ecobuscadores'
+        elif user_type == "ecoorganizador":
+            table_name = 'ecoorganizadores'
+        else:
+            return jsonify({'error': 'Invalid user type'}), 400
+
+        # Inicializa el cliente de DynamoDB
+
+        table = dynamodb.Table(table_name)
+
+        # Actualiza la foto del usuario en la tabla correspondiente
+        response = table.update_item(
+            Key={'id': current_user_id},
+            UpdateExpression='SET foto = :val',
+            ExpressionAttributeValues={
+                ':val': new_photo_url
+            },
+            ReturnValues='UPDATED_NEW'
+        )
+
+        # Devuelve una respuesta exitosa con la nueva URL de la foto
+        return jsonify({'message': 'Photo updated successfully', 'new_photo': new_photo_url}), 200
     
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -371,6 +419,91 @@ def rate_event():
         # Devuelve un mensaje de error genérico al cliente
         return jsonify({'error': 'Se produjo un error interno del servidor'}), 500
     
+
+#METODO PARA ACTUALIZAR LAS ESTRELLAS EN EL PERFIL DE LOS ECOORGANIZADORES:
+
+@app.route('/update_organizer_average', methods=['PATCH'])
+@jwt_required()
+def update_organizer_average():
+    DYNAMODB_CONTEXT.prec = 2
+    DYNAMODB_CONTEXT.rounding = ROUND_HALF_UP
+    current_user_id = get_jwt_identity()
+    try:
+        # Obtén la referencia a la tabla de ecoorganizadores
+        table = dynamodb.Table('ecoorganizadores')
+        
+        # Recupera el ecoorganizador de la base de datos
+        response = table.get_item(Key={'id': current_user_id})
+        organizer = response.get('Item', {})
+        
+        if not organizer:
+            return jsonify({'error': 'Organizer not found'}), 404
+        
+        # Calcula el nuevo promedio basado en los eventos creados
+        if 'created_events' in organizer and organizer['created_events']:
+            total_score = Decimal('0')
+            for event_id in organizer['created_events']:
+                event_table = dynamodb.Table('eventos')
+                event_response = event_table.get_item(Key={'id': event_id})
+                event = event_response.get('Item', {})
+                if 'puntaje' in event:
+                    total_score += Decimal(event['puntaje'])
+            
+            # Aquí asumimos que 'created_events' es una lista de IDs de eventos
+            new_average = (total_score / len(organizer['created_events'])).quantize(Decimal('0.0'), rounding=ROUND_HALF_UP)
+        else:
+            new_average = Decimal('0')
+
+        # Actualiza el promedio del ecoorganizador
+        update_response = table.update_item(
+            Key={'id': current_user_id},
+            UpdateExpression="SET promedio = :val",
+            ExpressionAttributeValues={
+                ':val': new_average
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+
+        # Verifica si el ecoorganizador ha alcanzado por primera vez las 5 estrellas en su perfil
+        if new_average == Decimal('5') and not organizer.get('haAlcanzadoCincoEstrellas', False):
+            # Actualiza el campo haAlcanzadoCincoEstrellas si es la primera vez que alcanza las 5 estrellas
+            table.update_item(
+                Key={'id': current_user_id},
+                UpdateExpression='SET haAlcanzadoCincoEstrellas = :val',
+                ExpressionAttributeValues={
+                    ':val': True
+                }
+        )
+
+        return jsonify({'message': 'Organizer average updated successfully', 'new_average': str(new_average)}), 200
+    
+    except Exception as e:
+        # Imprime la excepción en el log del servidor
+        app.logger.exception("Se produjo un error al actualizar el promedio del organizador")
+        # Devuelve un mensaje de error genérico al cliente
+        return jsonify({'error': 'Se produjo un error interno del servidor'}), 500
+    
+
+#METODO PARA RECUPERAR LA CANTIDAD ESTRELLAS EN EL PERFIL DEL ECOORGANIZADOR:
+
+@app.route('/get_organizer_rating/<organizer_id>', methods=['GET'])
+@jwt_required()
+def get_organizer_rating(organizer_id):
+    try:
+        organizers_table = dynamodb.Table('ecoorganizadores')
+        # Obtener el ecoorganizador por ID
+        organizer_response = organizers_table.get_item(Key={'id': organizer_id})
+        organizer = organizer_response.get('Item', None)
+        
+        if not organizer:
+            return jsonify({'error': 'Organizer not found'}), 404
+
+        # Devolver el promedio de calificaciones del ecoorganizador
+        return jsonify({'promedio': organizer.get('promedio', 0)}), 200
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'error': 'Internal Server Error'}), 500
+
 
 @app.route('/get_events_by_organizer', methods=['GET'])
 @jwt_required()
