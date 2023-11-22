@@ -39,11 +39,16 @@ const StarDisplay = ({ new_average }) => {
 const Event = ({ route }) => {
     const navigation = useNavigation();
     const { event } = route.params;
-    
+   
     // Estados para controlar la puntuación y la visibilidad del modal
     // Asegúrate de que starCount se inicializa como un número
     const [starCount, setStarCount] = useState(parseFloat(event.puntaje)); // Puntuación actual
     const [tempStarCount, setTempStarCount] = useState(starCount); // Puntuación temporal para el modal
+    const [modalVisible, setModalVisible] = useState(false);
+    const [userRole, setUserRole] = useState('');
+    const [userAssistedEvents, setUserAssistedEvents] = useState([]);
+
+ 
 
     useEffect(() => {
         // Cargar la puntuación guardada al iniciar el componente
@@ -58,11 +63,70 @@ const Event = ({ route }) => {
         };
 
         loadStarCount();
+
+        const loadUserRole = async () => {
+            const role = await AsyncStorage.getItem('rol');
+            console.log('Rol del usuario:', role); 
+            setUserRole(role);
+        };
+
+        loadUserRole();
+
+        const loadUserAssistedEvents = async () => {
+            try {
+                const assistedEventsString = await AsyncStorage.getItem('assistedEvents');
+                if (assistedEventsString !== null) {
+                    const assistedEventsArray = JSON.parse(assistedEventsString);
+                    console.log('Eventos asistidos cargados:', assistedEventsArray);
+                    setUserAssistedEvents(assistedEventsArray);
+                }
+            } catch (error) {
+                console.error('Error al cargar los eventos asistidos:', error);
+            }
+        };
+    
+        loadUserAssistedEvents();
+
     }, [event.id, event.puntaje]); // Dependencias del efecto
 
-    const [modalVisible, setModalVisible] = useState(false);
     console.log('starCount:', starCount);
 
+    const isUserRegistered = () => {
+        const registered = event && userAssistedEvents.some(eventItem => eventItem.S === event.id);
+        console.log(`¿Usuario registrado en el evento ${event.id}?`, registered);
+        return registered;
+    };
+    const handleAssist = async () => {
+        console.log('Asistencia')
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) {
+                Alert.alert('Error', 'No se encontró el token de autenticación.');
+                return;
+            }
+            const response = await fetch('http://192.168.3.4:5000/assist_event', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    event_id: event.id,
+                }),
+            });
+            if (response.ok) {
+                Alert.alert('Éxito', 'Asistencia registrada correctamente');
+                console.log('Asistencia registrada correctamente al evento:', event.id);
+                setUserAssistedEvents(prevEvents => [...prevEvents, { S: event.id }]);
+                await AsyncStorage.setItem('assistedEvents', JSON.stringify([...userAssistedEvents, { S: event.id }]));
+            } else {
+                Alert.alert('Error', 'Error al registrar la asistencia');
+            }
+        } catch (error) {
+            console.error('Error al registrar la asistencia:', error);
+            Alert.alert('Error', error.toString());
+        }
+    };
     // Función para manejar la selección de estrellas en el modal
     const onStarRatingPress = (newRating) => {
         setTempStarCount(newRating); // Esto actualizará el valor temporal mientras el usuario selecciona las estrellas
@@ -82,8 +146,8 @@ const Event = ({ route }) => {
             Alert.alert('Error', 'No se encontró el token de autenticación.');
             return;
           }
-  
-          const response = await fetch('http://192.168.0.17:5000/update_organizer_average', {
+          
+          const response = await fetch('http://192.168.3.4:5000/update_organizer_average', {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -116,7 +180,7 @@ const Event = ({ route }) => {
     
             console.log('Puntuación seleccionada por el usuario:', tempStarCount);
     
-            const response = await fetch('http://192.168.0.17:5000/rate_event', {
+            const response = await fetch('http://192.168.3.4:5000/rate_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -163,7 +227,19 @@ const Event = ({ route }) => {
 
     return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
-    <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+            <View style={styles.eventHeader}>
+                <Text style={styles.title}>{event.nombre}</Text>
+                {isUserRegistered() ? (
+                    <View style={styles.checkButton}>
+                        <FontAwesome5 name="check" size={24} color="black" />
+                    </View>
+                ) : (
+                    <TouchableOpacity onPress={handleAssist} style={styles.assistButton}>
+                        <AntDesign name="pluscircle" size={24} color="black" />
+                    </TouchableOpacity>
+                )}
+            </View>
             <Image source={{ uri: event.banner }} style={styles.image} />
             <Text style={styles.title}>{event.nombre}</Text>
             <Text style={styles.userId}>Creado por: {event.id_organizador}</Text>
@@ -276,6 +352,28 @@ const styles = StyleSheet.create({
         padding: 10,
         elevation: 2,
         marginTop: 20,
+    },
+    eventHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    checkButton: {
+        backgroundColor: '#4CAF50',  
+        padding: 10,                
+        borderRadius: 5,            
+        alignItems: 'center',       
+        justifyContent: 'center',   
+    },
+    assistButton: {
+        backgroundColor: '#47897E',
+        padding: 10,
+        borderRadius: 5,
     },
     textStyle: {
         color: 'white',

@@ -86,7 +86,7 @@ def register():
                 'ciudad': None,
                 'telefono':None,
                 'count_events': None,
-                'list_events':None,
+                'assisted_events':[],
                 'rol':'ecobuscador',
                 'foto': default_images['ecobuscador'][genero],
             }
@@ -269,6 +269,37 @@ def delete_user():
 #------------------------
 #METODOS PARA LOS EVENTOS
 #------------------------
+
+
+@app.route('/assist_event', methods=['POST'])
+@jwt_required()
+def assist_event():
+    current_user_id = get_jwt_identity()
+    event_id = request.json.get('event_id')
+    if not event_id:
+        return jsonify({'error': 'Event ID is required'}), 400
+
+    try:
+        ecobuscadores_table = dynamodb.Table('ecobuscadores')
+        response = ecobuscadores_table.update_item(
+            Key={'id': current_user_id},
+            UpdateExpression="SET assisted_events = list_append(if_not_exists(assisted_events, :emptyList), :event_id)",
+            ExpressionAttributeValues={
+                ':event_id': [event_id],  # Aquí cambias para agregar solo el ID
+                ':emptyList': []
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+
+        if response['ResponseMetadata']['HTTPStatusCode'] != 200:
+            return jsonify({'error': 'Failed to update ecobuscadores table'}), 500
+
+        return jsonify({'message': 'Event assisted successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    
 
 @app.route('/create_event', methods=['POST'])
 @jwt_required()
