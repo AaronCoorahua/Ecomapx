@@ -74,7 +74,7 @@ const Event = ({ route }) => {
         const fetchUserAssistedEvents = async () => {
             try {
                 const token = await AsyncStorage.getItem('userToken');
-                if (token) {
+                if (token && userRole === 'ecobuscador') {
                     const response = await fetch('http://192.168.3.4:5000/get_user_assisted_events', {
                         method: 'GET',
                         headers: {
@@ -97,8 +97,7 @@ const Event = ({ route }) => {
         };
 
         loadStarCount();
-        loadUserRole();
-        fetchUserAssistedEvents();
+        loadUserRole().then(fetchUserAssistedEvents);
     }, [event.id, event.puntaje]); // Dependencias del efecto
 
     console.log('starCount:', starCount);
@@ -250,19 +249,19 @@ const Event = ({ route }) => {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.eventHeader}>
-                    <Text style={styles.title}>{event.nombre}</Text>
-                    {isLoading ? (
-                        <ActivityIndicator size="small" color="#0000ff" />  // Indicador de carga
-                    ) : isUserRegistered() ? (
-                        <View style={styles.checkButton}>
-                            <FontAwesome5 name="check" size={24} color="black" />
-                        </View>
-                    ) : (
-                        <TouchableOpacity onPress={handleAssist} style={styles.assistButton}>
-                            <AntDesign name="pluscircle" size={24} color="black" />
-                        </TouchableOpacity>
-                    )}
-                </View>
+                <Text style={styles.title}>{event.nombre}</Text>
+                {userRole === 'ecoobuscador' && (isLoading ? (
+                    <ActivityIndicator size="small" color="#0000ff" />
+                ) : isUserRegistered() ? (
+                    <View style={styles.checkButton}>
+                        <FontAwesome5 name="check" size={24} color="black" />
+                    </View>
+                ) : (
+                    <TouchableOpacity onPress={handleAssist} style={styles.assistButton}>
+                        <AntDesign name="pluscircle" size={24} color="black" />
+                    </TouchableOpacity>
+                ))}
+            </View>
             <Image source={{ uri: event.banner }} style={styles.image} />
             <Text style={styles.title}>{event.nombre}</Text>
             <Text style={styles.userId}>Creado por: {event.id_organizador}</Text>
