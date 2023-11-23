@@ -75,7 +75,7 @@ const Event = ({ route }) => {
             try {
                 const token = await AsyncStorage.getItem('userToken');
                 if (token) {
-                    const response = await fetch('http://192.168.3.4:5000/get_user_assisted_events', {
+                    const response = await fetch('http://192.168.0.17:5000/get_user_assisted_events', {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`
