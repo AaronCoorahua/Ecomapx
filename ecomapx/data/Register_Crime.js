@@ -60,7 +60,7 @@ export default function RegisterCrime() {
         detalles: details,
       };
   
-      const response = await fetch('http://192.168.3.4:5000/add_crime', {
+      const response = await fetch('http://192.168.0.17:5000/add_crime', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
