@@ -243,6 +243,8 @@ const Event = ({ route }) => {
     const securityLevel = distritosSecurity.find(d => d.DISTRITOS === event.ubicacion)?.['NIVEL DE INSEGURIDAD'] || 'No disponible';
     const numericSecurityLevel = isNaN(securityLevel) ? 0 : parseInt(securityLevel, 10);
     const securityIconColor = getSecurityIconColor(numericSecurityLevel);
+    const durationInMinutes = Math.round(parseFloat(event.duracion));
+    const Capacidad = Math.round(parseFloat(event.capacidad));
 
     return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
@@ -270,8 +272,8 @@ const Event = ({ route }) => {
             </View>
             <Text style={styles.detail}>{event.descrip_detail}</Text>
             <Text style={styles.tag}>{event.tag}</Text>
-            <Text style={styles.capacity}>Capacidad: {event.capacidad}</Text>
-            <Text style={styles.duration}>Duración: {event.duracion}</Text>
+            <Text style={styles.capacity}>Capacidad: {Capacidad}</Text>
+            <Text style={styles.duration}>Duración: {durationInMinutes}</Text>
             <Text style={styles.date}>{event.fecha}</Text>
             <Text style={styles.time}>{event.hora}</Text>
             <Text style={styles.status}>{event.status}</Text>
