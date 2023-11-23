@@ -270,6 +270,22 @@ def delete_user():
 #METODOS PARA LOS EVENTOS
 #------------------------
 
+@app.route('/get_user_assisted_events', methods=['GET'])
+@jwt_required()
+def get_user_assisted_events():
+    current_user_id = get_jwt_identity()
+    try:
+        table = dynamodb.Table('ecobuscadores')
+        response = table.get_item(Key={'id': current_user_id})
+        if 'Item' not in response:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+        user = response['Item']
+        assisted_events = user.get('assisted_events', [])
+        return jsonify({'assistedEvents': assisted_events}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/assist_event', methods=['POST'])
 @jwt_required()

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView, Alert, Modal,TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView, Alert, Modal,TouchableOpacity,  ActivityIndicator} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
@@ -47,7 +47,7 @@ const Event = ({ route }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [userRole, setUserRole] = useState('');
     const [userAssistedEvents, setUserAssistedEvents] = useState([]);
-
+    const [isLoading, setIsLoading] = useState(true);
  
 
     useEffect(() => {
@@ -62,7 +62,7 @@ const Event = ({ route }) => {
             }
         };
 
-        loadStarCount();
+    
 
         const loadUserRole = async () => {
             const role = await AsyncStorage.getItem('rol');
@@ -70,31 +70,47 @@ const Event = ({ route }) => {
             setUserRole(role);
         };
 
-        loadUserRole();
 
-        const loadUserAssistedEvents = async () => {
+        const fetchUserAssistedEvents = async () => {
             try {
-                const assistedEventsString = await AsyncStorage.getItem('assistedEvents');
-                if (assistedEventsString !== null) {
-                    const assistedEventsArray = JSON.parse(assistedEventsString);
-                    console.log('Eventos asistidos cargados:', assistedEventsArray);
-                    setUserAssistedEvents(assistedEventsArray);
+                const token = await AsyncStorage.getItem('userToken');
+                if (token) {
+                    const response = await fetch('http://192.168.3.4:5000/get_user_assisted_events', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        setUserAssistedEvents(data.assistedEvents);
+                    } else {
+                        console.error('Error al obtener eventos asistidos');
+                    }
                 }
             } catch (error) {
-                console.error('Error al cargar los eventos asistidos:', error);
+                console.error('Error al cargar eventos asistidos:', error);
+            } finally {
+                setIsLoading(false);  // Finaliza la carga una vez que se obtienen los datos
             }
         };
-    
-        loadUserAssistedEvents();
 
+        loadStarCount();
+        loadUserRole();
+        fetchUserAssistedEvents();
     }, [event.id, event.puntaje]); // Dependencias del efecto
 
     console.log('starCount:', starCount);
 
+    
+
     const isUserRegistered = () => {
-        const registered = event && userAssistedEvents.some(eventItem => eventItem.S === event.id);
-        console.log(`¿Usuario registrado en el evento ${event.id}?`, registered);
-        return registered;
+        if (!event || !userAssistedEvents) return false;
+        console.log('ID del evento actual:', event.id);
+        console.log('Eventos asistidos:', userAssistedEvents);
+        // Comprobar si el ID del evento está en la lista de eventos asistidos
+        return userAssistedEvents.some(eventItem => eventItem === event.id);
     };
     const handleAssist = async () => {
         console.log('Asistencia')
@@ -117,8 +133,13 @@ const Event = ({ route }) => {
             if (response.ok) {
                 Alert.alert('Éxito', 'Asistencia registrada correctamente');
                 console.log('Asistencia registrada correctamente al evento:', event.id);
-                setUserAssistedEvents(prevEvents => [...prevEvents, { S: event.id }]);
-                await AsyncStorage.setItem('assistedEvents', JSON.stringify([...userAssistedEvents, { S: event.id }]));
+            
+                // Actualiza el estado y luego actualiza AsyncStorage
+                setUserAssistedEvents(prevEvents => {
+                    const updatedEvents = [...prevEvents, event.id]; // Asegúrate de que sea solo el ID si así lo manejas
+                    AsyncStorage.setItem('assistedEvents', JSON.stringify(updatedEvents));
+                    return updatedEvents;
+                });
             } else {
                 Alert.alert('Error', 'Error al registrar la asistencia');
             }
@@ -229,17 +250,19 @@ const Event = ({ route }) => {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.eventHeader}>
-                <Text style={styles.title}>{event.nombre}</Text>
-                {isUserRegistered() ? (
-                    <View style={styles.checkButton}>
-                        <FontAwesome5 name="check" size={24} color="black" />
-                    </View>
-                ) : (
-                    <TouchableOpacity onPress={handleAssist} style={styles.assistButton}>
-                        <AntDesign name="pluscircle" size={24} color="black" />
-                    </TouchableOpacity>
-                )}
-            </View>
+                    <Text style={styles.title}>{event.nombre}</Text>
+                    {isLoading ? (
+                        <ActivityIndicator size="small" color="#0000ff" />  // Indicador de carga
+                    ) : isUserRegistered() ? (
+                        <View style={styles.checkButton}>
+                            <FontAwesome5 name="check" size={24} color="black" />
+                        </View>
+                    ) : (
+                        <TouchableOpacity onPress={handleAssist} style={styles.assistButton}>
+                            <AntDesign name="pluscircle" size={24} color="black" />
+                        </TouchableOpacity>
+                    )}
+                </View>
             <Image source={{ uri: event.banner }} style={styles.image} />
             <Text style={styles.title}>{event.nombre}</Text>
             <Text style={styles.userId}>Creado por: {event.id_organizador}</Text>
