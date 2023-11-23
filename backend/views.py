@@ -565,6 +565,26 @@ def get_events_by_organizer():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+#METODO PARA OBTENER LOS DETALLES DE LOS EVENTOS A LOS QUE ESTAN ASISTIENDO LOS ECOBUSCADORES:
+
+@app.route('/get_events_details', methods=['POST'])
+def get_events_details():
+    try:
+        event_ids = request.json.get('event_ids', [])
+        table = dynamodb.Table('eventos')
+        events_details = []
+
+        for event_id in event_ids:
+            response = table.get_item(Key={'id': event_id})
+            event = response.get('Item')
+            if event:
+                events_details.append(event)
+
+        return jsonify(events_details), 200  # Aquí devuelves directamente la lista
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/listEvents', methods=['GET'])
 @jwt_required()

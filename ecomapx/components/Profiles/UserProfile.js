@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet,ScrollView} from 'react-native';
+import { View, Text, Image, StyleSheet,ScrollView, Alert, FlatList} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
 import RedesSocialesIcon from '../../assets/redes-sociales.png';
@@ -16,16 +16,55 @@ const user1 = {
 
 const bannerImage = 'https://media.discordapp.net/attachments/1015053042959265802/1159934655043219546/pngtree-hilarious-3d-gorilla-cartoon-pumping-iron-image_3813702.png?ex=6532d454&is=65205f54&hm=764140bfb6a3da54692bda045156ab0831c6bca4b9cd318ffb5bc780fcba9ef3';
 
-const medalla1 = 'https://media.discordapp.net/attachments/1155323431915630594/1160134137886289920/image.png?ex=65338e1c&is=6521191c&hm=c029ab5d594426fbda753bdaf7b8669d969f22fb03ba6e35f91c83a10e390095&=';
-const medalla2 = 'https://media.discordapp.net/attachments/1155323431915630594/1160134014980608060/image.png?ex=65338dff&is=652118ff&hm=65fbe72bd8398af6a6d3263525e22b49b7b78fb413ca51a9bd25ba17740823c3&=';
+
+//MEDALLAS DEVERITAS:
+
+const ecoPioneroMedal = "https://media.discordapp.net/attachments/1155323431915630594/1176299753630335136/image.png?ex=656e5d83&is=655be883&hm=507c348dca67b1c5d2d7e1553b20d9f690deaaafbdbff45de497419cddf1a072&=";
+const cincoEventosMedal = "https://media.discordapp.net/attachments/1155323431915630594/1176300149274845305/image.png?ex=656e5de2&is=655be8e2&hm=bf8088f5ad9f9e446e13ead08643e5043e983af23133b3320cddcfbfe977f33b&=";
+const diezEventosMedal = "https://media.discordapp.net/attachments/1155323431915630594/1176271498466566174/image.png";
+//const ecoLiderMedal = "https://media.discordapp.net/attachments/1155323431915630594/1176271548353617990/image.png";
+
 
 // Lista de intereses
 const interes1 = 'https://media.discordapp.net/attachments/952775750728155136/1161435237075656704/montana.png?ex=653849da&is=6525d4da&hm=8780d957d9b6b2bb5289227f94a35776e573703c6c903b901510d69f6c42f7a1&=&width=423&height=423';
 const interes2 = 'https://media.discordapp.net/attachments/952775750728155136/1161435260253372507/reciclar-senal.png?ex=653849e0&is=6525d4e0&hm=59e605288ece681af3f60348e92856c8b60585612cc0bf31440de50af6ec3885&=&width=423&height=423';
 
+const MedalsDisplay = ({ user, eventsData }) => {
+  const showEcoPioneroMedal = user.assisted_events && user.assisted_events.length >= 1; //Medalla x asistir a su primer evento
+  const showCincoEventosMedal = user.assisted_events && user.assisted_events.length >= 5; //Ha asistido a 5 o + eventos
+  const showDiezEventosMedal = user.assisted_events && user.assisted_events.length >= 10; //Ha asistido a 10 o + eventos
+
+  return (
+    <>
+      {showEcoPioneroMedal && (
+        <View style={styles.medal}>
+          <Image source={{ uri: ecoPioneroMedal }} style={styles.medalImage} />
+          <Text style={styles.medalTitle}>Medalla Ecopionero</Text>
+        </View>
+      )}
+      {showCincoEventosMedal && (
+        <View style={styles.medal}>
+          <Image source={{ uri: cincoEventosMedal }} style={styles.medalImage} />
+          <Text style={styles.medalTitle}>Medalla 5 Eventos</Text>
+        </View>
+      )}
+      {showDiezEventosMedal && (
+        <View style={styles.medal}>
+          <Image source={{ uri: diezEventosMedal }} style={styles.medalImage} />
+          <Text style={styles.medalTitle}>Medalla 10 Eventos</Text>
+        </View>
+      )}
+      {/* Repite la lógica para las otras medallas */}
+    </>
+  );
+};
+
+
+
 export default function UserProfile() {
   
     const [user, setUser] = useState(null);
+    const [eventos, setEventos] = useState([]);
 
     useEffect(() => {
       // Función para recuperar el perfil del usuario
@@ -63,8 +102,41 @@ export default function UserProfile() {
       };
     
       fetchUserProfile();
+      fetchAssistedEventsDetails();
     }, []);
         
+    const fetchAssistedEventsDetails = async () => {
+      const token = await AsyncStorage.getItem('userToken');
+      const assistedEventIdsString = await AsyncStorage.getItem('assistedEvents');
+      if (token && assistedEventIdsString) {
+          const assistedEventIds = JSON.parse(assistedEventIdsString);
+          // Luego realiza la solicitud con estos IDs
+          try {
+              const response = await fetch('http://192.168.0.17:5000/get_events_details', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ event_ids: assistedEventIds }),
+              });
+
+              const data = await response.json();
+
+              // Imprime la respuesta en la consola
+              console.log('Detalles de los Eventos a los que va asistir el ecobuscador:', data);
+              if (response.ok) {
+                setEventos(data);
+              } else {
+                  Alert.alert('Error', data.error || 'Error al obtener detalles de eventos asistidos.');
+              }
+          } catch (error) {
+              console.error('Error fetching assisted events details:', error);
+              Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+          }
+      }
+  };
+
     /* Luego descomentar, ahorita solo quiero probar si funciona bien el redireccionamiento segun el rol del usuario*/
     if (!user) {
         return <Text></Text>;
@@ -142,25 +214,31 @@ export default function UserProfile() {
             {/* Agrega más intereses según sea necesario */}
           </View>
         </View>
-    
+
         {/* Contenedor de la sección de medallas */}
         <View style={styles.medalsContainer}>
-          {/* Título de Medallas */}
           <Text style={styles.medalsTitle}>Medallas:</Text>
-          {/* Contenedor de medallas */}
-          <View style={styles.medalsContent}>
-            {/* Medalla 1 */}
-            <View style={styles.medal}>
-              <Image source={{ uri: medalla1 }} style={styles.medalImage} />
-              <Text style={styles.medalTitle}>Medalla de Oro</Text>
-            </View>
-            {/* Medalla 2 */}
-            <View style={styles.medal}>
-              <Image source={{ uri: medalla2 }} style={styles.medalImage} />
-              <Text style={styles.medalTitle}>Medalla de Plata</Text>
-            </View>
-            {/* Agrega más medallas según sea necesario */}
-          </View>
+          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.medalsContent}>
+            {/* Aquí usas MedalsDisplay pasando el usuario */}
+            <MedalsDisplay user={user} eventsData={eventos} />
+          </ScrollView>
+        </View>
+
+        {/* Sección: "Mis Eventos" */}
+        <View style={styles.misEventosContainer}>
+          <Text style={styles.misEventosTitle}>Mis Eventos:</Text>
+          <FlatList
+            data={eventos}
+            horizontal={true} // Deslizamiento horizontal
+            showsHorizontalScrollIndicator={false} // Ocultar la barra de desplazamiento
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.eventoContainer}>
+                <Image source={{ uri: item.banner }} style={styles.eventoImage} />
+                <Text style={styles.eventoNombre}>{item.nombre}</Text>
+              </View>
+            )}
+          />
         </View>
       </ScrollView>
     );
@@ -168,6 +246,48 @@ export default function UserProfile() {
 }
 
 const styles = StyleSheet.create({
+  // Estilos para la sección "Mis Eventos"
+  misEventosContainer: {
+    marginVertical: 10,
+    paddingLeft: 10,
+    paddingRight: 0,
+  },
+
+  misEventosTitle: {
+      fontSize: 19,
+      fontWeight: 'bold',
+      color: '#333',
+      marginLeft: 10,
+      marginBottom: 12,
+    },
+  eventoContainer: {
+    marginLeft: 10,
+    marginHorizontal: 5, // Espaciado horizontal reducido para evitar demasiado espacio entre tarjetas
+    width: 160, // Ancho ligeramente reducido
+    borderRadius: 15, // Esquinas más redondeadas
+    borderWidth: 0.4,
+    borderColor: '#ccc',
+    shadowColor: '#000', // Sombra negra
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3, // Elevación para Android para efecto de sombra
+    overflow: 'hidden', // Mantiene las imágenes dentro de las esquinas redondeadas
+  },
+
+  eventoImage: {
+    width: '100%',
+    height: 120, // Altura ajustada para mantener la relación de aspecto
+    resizeMode: 'cover', // Asegura que la imagen cubra el área sin distorsión
+  },
+
+  eventoNombre: {
+    padding: 8, // Padding reducido para más espacio de imagen
+    fontSize: 14, // Tamaño de fuente ligeramente reducido
+    fontWeight: '500', // Menos pesado que 'bold'
+    textAlign: 'center',
+    color: 'black', // Color ligeramente más suave que el negro
+  },
   profileImageContainer: {
     position: 'absolute',
     left: 10,
@@ -299,26 +419,31 @@ interes: {
     marginTop: 5,
     fontWeight: 'bold',
   },
+
   medalsContainer: {
-    marginTop: 11,
+    marginTop: 5,
+    //backgroundColor: 'pink',
+
   },
   medalsTitle: {
     fontSize: 19,
     fontWeight: 'bold',
     marginBottom: 10,
     marginLeft: 20,
+    color: '#333',
   },
   medalsContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    //flexDirection: 'row',
+    //justifyContent: 'space-between',
+
   },
   medal: {
     alignItems: 'center',
   },
   medalImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 65,
+    height: 65,
+    borderRadius: 32.5,
     borderWidth: 2,
     borderColor: 'gold',
   },
