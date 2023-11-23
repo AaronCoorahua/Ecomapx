@@ -1,6 +1,5 @@
-//CalendarViewDiaySem (todo es dinamico y solo falta poner + estetico el modal cuando se presiona una tarea *nda + uwu*)
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableWithoutFeedback, Dimensions} from "react-native"
+import React, { useEffect, useState, useContext } from "react";
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableWithoutFeedback, Dimensions, Alert} from "react-native"
 import Modal from 'react-native-modal';
 import { horas } from "./horas"
 //import Tasks from "./tasks/tasksView";
@@ -13,48 +12,135 @@ import FontistoIcon from 'react-native-vector-icons/Fontisto';
 import ComunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {compararHoras} from "./functions";
+//import { TasksContext } from '../../app/TasksContext'; 
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const {width} = Dimensions.get('screen');
 
-const getUniqueColor = (taskId) => {
+  const getUniqueColor = (eventId) => {
     const colors = [
-    //pink, verdebonito, skyblue, amarillo, moradito, lightcoral, azuleado, fucsia/rosado
-      'pink', '#4CE862', 'skyblue', '#FFE633', '#EE62FF', 'lightcoral', '#3BA3FF', '#FF62A5', 
+      'pink', '#4CE862', 'skyblue', '#FFE633', '#EE62FF', 'lightcoral', '#3BA3FF', '#FF62A5',
     ];
   
-    const colorIndex = taskId % colors.length; // Usando el id de la tarea se obteniene un índice de color especifico uwu
+    let sum = 0;
+    for (let i = 0; i < eventId.length; i++) {
+      sum += eventId.charCodeAt(i); // Suma los códigos de carácter Unicode de cada carácter del ID
+    }
+  
+    const colorIndex = sum % colors.length; // Usa el total para obtener un índice dentro del rango de colores
     return colors[colorIndex];
   };
+  
 
- {/*  
+//cambiar tasks x events (+ adelante)
+const calculateOverlap = (filteredEvents) => {
+    let overlaps = {};
+    
+    filteredEvents.forEach((event) => {
+      const eventStart = moment(event.hora, 'HH:mm').format('HH:mm');
+      if (!overlaps[eventStart]) {
+        overlaps[eventStart] = [];
+      }
+      overlaps[eventStart].push(event.id);
+    });
+  
+    return overlaps;
+};
+  
+//cambiar tasks x events (+ adelante)
 
-const TasksList = ({ tasks, containerHeight }) => {
-  console.log("Tasks inside TasksList:", tasks);
+const TasksList = React.memo(({ filteredEvents, containerHeight }) => {
+  console.log("Tasks inside TasksList:", filteredEvents);
+  const overlaps = calculateOverlap(filteredEvents);
+  
   return (
     <View style={{ position: 'relative', flex: 1 }}>
-      {tasks.map((task) => (
-        <TaskItem key={task.id} task={task} containerHeight={containerHeight} />
-      ))}
+      {filteredEvents.map((event) => {
+        const eventStart = moment(event.hora, 'HH:mm').format('HH:mm');
+        return (
+          <TaskItem
+            key={event.id}
+            event={event}
+            containerHeight={containerHeight}
+            overlaps={overlaps[eventStart] || []}
+          />
+        );
+      })}
     </View>
   );
+});
+
+
+const calculateTaskWidth = (numberOfOverlaps) => {
+  switch (numberOfOverlaps) {
+    case 1:
+      return 300;
+    case 2:
+      return 150; 
+    case 3:
+      return 100; 
+    case 4:
+      return 75; 
+    case 5:
+      return 62.9; 
+    default:
+      return 380; 
+  }
 };
 
-const TaskItem = ({ task, containerHeight }) => {
-    const taskColor = getUniqueColor(task.id);
-    const startTime = moment(task.start_time, 'HH:mm');
-    const endTime = moment(task.end_time, 'HH:mm');
-  
-    const durationInMinutes = endTime.diff(startTime, 'minutes');
+const calculateTaskLeft = (numberOfOverlaps, overlapIndex) => {
+  switch (numberOfOverlaps) {
+    case 1:
+      return  (60 + overlapIndex * 92); 
+    case 2:
+      return  (60 + overlapIndex * 150); 
+    case 3:
+      return (60 + overlapIndex * 100); 
+    case 4:
+      return (60 + overlapIndex * 75); 
+    case 5:
+      return (60 + overlapIndex * 62.9); 
+    default:
+      return 380; 
+  }
+};
+
+
+const TaskItem = ({ event, containerHeight, overlaps}) => { 
+    const taskColor = getUniqueColor(event.id);
+    console.log("taskColor: ",taskColor);
+
+    const startTime = moment(event.hora, 'HH:mm');
+
+    // Asumiendo que la duración está en minutos y es una cadena, conviértela a un número entero.
+    const durationInMinutes = parseInt(event.duracion, 10);
+
+    // Suma la duración a la hora de inicio para obtener la hora de finalización.
+    const endTime = moment(startTime).add(durationInMinutes, 'minutes');
+
+    // Formatea la hora de finalización al formato deseado, por ejemplo 'HH:mm'.
+    const formattedEndTime = endTime.format('HH:mm');
   
     const topPosition = ((startTime.hours() * containerHeight) + ((startTime.minutes() / 60) * containerHeight))-1645;
     const taskHeight = (durationInMinutes / 60) * containerHeight;
-  
+
+    // Encuentra el índice de esta tarea en el arreglo de superposiciones
+    const overlapIndex = overlaps.indexOf(event.id);
+    const numberOfOverlaps = overlaps.length;
+    console.log("numberOfOverlaps: ",numberOfOverlaps)
+
+
+    console.log("taskWidth actual: ", taskWidth);
+
+    const taskWidth = calculateTaskWidth(numberOfOverlaps); 
+    const marginLeft = calculateTaskLeft(numberOfOverlaps, overlapIndex);
     const taskStyle = {
-      position: 'absolute',
-      top: topPosition,
-      height: taskHeight,
-      width: '78%',
-      marginLeft: 60,
+      position: 'absolute', 
+      top: topPosition, //posicion de la tarea
+      height: taskHeight, //alto de la tarea
+      width: taskWidth, //ancho de la tarea
+      marginLeft: marginLeft,
       borderRadius: 15,
       padding: 10,
       display: 'flex',
@@ -63,9 +149,10 @@ const TaskItem = ({ task, containerHeight }) => {
       alignItems: 'center',
       backgroundColor: taskColor, 
     };
+    console.log("taskWidth actual2: ", taskWidth);
 
     console.log("StartTime:", startTime);
-    console.log("EndTime:", endTime);
+    console.log("EndTime:", formattedEndTime);
     console.log("Top Position:", topPosition);
     console.log("Task Height:", taskHeight);
   
@@ -100,6 +187,7 @@ const TaskItem = ({ task, containerHeight }) => {
         padding: 20,
         borderRadius: 10,
         justifyContent: 'center',
+        alignSelf: 'center',
         height: 513,
         width: 340,
      };
@@ -168,7 +256,16 @@ const TaskItem = ({ task, containerHeight }) => {
         marginBottom: 10,
         marginTop: 0,
         flexWrap: 'wrap',  
-        //backgroundColor: 'red',
+    };
+
+    const descStyle2 = {
+      flexDirection: 'row',  
+      alignItems: 'flex-start',
+      marginTop: -8,
+      flexWrap: 'wrap',  
+      paddingHorizontal: 30,
+      marginBottom: 10,
+
     };
 
     const ubiStyle = {
@@ -177,7 +274,15 @@ const TaskItem = ({ task, containerHeight }) => {
         marginBottom: 10,
         marginTop: 0,
         flexWrap: 'wrap',  
-        //backgroundColor: 'red',
+    };
+
+    const ubiStyle2 = {
+      flexDirection: 'row',  
+      alignItems: 'flex-start',
+      marginTop: -8,
+      flexWrap: 'wrap',  
+      paddingHorizontal: 30,
+      marginBottom: 10,
     };
 
     const contentTextStyle = {
@@ -191,69 +296,71 @@ const TaskItem = ({ task, containerHeight }) => {
         marginRight: 5,  // Espaciado entre ícono y texto.
     };
 
-     const formattedDate = moment.utc(task.date).format('ddd, DD MMM YYYY');
+     const formattedDate = moment(event.fecha, "DD/MM/YYYY").format('ddd, DD MMM YYYY');
      
      return (
       <View>
-        <TouchableOpacity onPress={toggleModal}>
+      <TouchableOpacity onPressIn={toggleModal}>
           <View style={taskStyle}>
-            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{task.name}</Text>
+            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{event.nombre}</Text>
             <View style={timeStyle}>
               <Text>⏰</Text>
-              <Text style={{ marginLeft: 5 }}>{task.start_time} - {task.end_time}</Text>
+              <Text style={{ marginLeft: 5 }}>{event.hora} - {formattedEndTime}</Text>
             </View>
           </View>
         </TouchableOpacity>
         <Modal isVisible={isModalVisible}>
-          <View style={modalStyle}>
-           //Botón de cierre del modal "X" 
+          <View style={modalStyle}> 
             <TouchableOpacity style={closeButtonStyle} onPress={toggleModal}>
               <FontistoIcon name="close" style={closeIconStyle} />
             </TouchableOpacity>
     
-            // Contenido del modal 
-            <Text style={titleStyle}>{task.name}</Text>
+          
+            <Text style={titleStyle}>{event.nombre}</Text>
             <View style={datedStyle}>
-              <ComunityIcon name="calendar-clock" size={23} color="#000" style={iconStyle} />
+              <ComunityIcon name="calendar-clock" size={23} color="#000" marginTop={3} style={iconStyle} />
               <Text style={datextoStyle}>Fecha: </Text> 
               <Text style={{fontSize: 17}}>{formattedDate}</Text>
             </View>
             <View style={startStyle}>
-              <ComunityIcon name="clock-time-three" size={23} color="#000" style={iconStyle} /> 
+              <ComunityIcon name="clock-time-three" size={23} color="#000" marginTop={2} style={iconStyle} /> 
               <Text style={datextoStyle}>Hora Inicio: </Text> 
-              <Text style={{fontSize: 17}}>{task.start_time}</Text>
+              <Text style={{fontSize: 17}}>{event.hora}</Text>
             </View>
             <View style={endStyle}>
-              <Ionicons name="timer" size={23} color="#000" style={iconStyle} /> 
+              <Ionicons name="timer" size={23} color="#000" marginTop={3} style={iconStyle} /> 
               <Text style={datextoStyle}>Hora Fin: </Text> 
-              <Text style={{fontSize: 17}}>{task.end_time}</Text>
+              <Text style={{fontSize: 17}}>{formattedEndTime}</Text>
             </View>
-    
-            // Condición para mostrar descripción solo si no es null 
-            {task.description && (
+            {event.descripcion && (
+              <>
                 <View style={descStyle}>
-                <ComunityIcon name="text" size={23} color="#000" style={iconStyle} /> 
-                <Text style={datextoStyle}>Descripción: </Text> 
-                <Text style={contentTextStyle}>{task.description}</Text>
+                  <ComunityIcon name="text" size={23} color="#000" style={iconStyle} /> 
+                  <Text style={datextoStyle}>Descripción: </Text> 
                 </View>
+                <View style={descStyle2}>
+                  <Text style={contentTextStyle}>{event.descripcion}</Text>
+                </View>
+              </>
             )}
-    
-            // Condición para mostrar ubicación solo si no es null 
-            {task.place && (
+
+            {event.ubicacion && (
+              <>
               <View style={ubiStyle}>
-              <FontistoIcon name="map-marker-alt" size={21} color="#000" style={iconStyle} /> 
+              <FontistoIcon name="map-marker-alt" size={21} color="#000" marginTop={2} paddingHorizontal={2} style={iconStyle} /> 
               <Text style={datextoStyle}> Ubicación: </Text> 
-              <Text style={contentTextStyle}>{task.place}</Text>
               </View>
+              <View style={ubiStyle2}>
+              <Text style={contentTextStyle}>{event.ubicacion}</Text>
+              </View>
+              </>
             )}
           </View>
         </Modal>
       </View>
     );
-    
-};
+  };
 
-*/}
 
 export default function CalendarViewDiaySem() {
     const swiper = React.useRef();
@@ -263,43 +370,66 @@ export default function CalendarViewDiaySem() {
     const [currentMinute, setCurrentMinute]= useState(new Date().getMinutes());
     const [left, setLeft] = useState(140);
     const totalInterval = 70.0/60;
-    
-    // Cambia el estado inicial de tareas a un arreglo vacío
-    const [tasks, setTasks] = useState([]);
+    //const { tasks, refreshTasks } = useContext(TasksContext);
+    const [eventos, setEventos] = useState([]);
 
-    // useEffect para cargar las tareas cuando el componente se monta o la fecha cambia
-/*
     useEffect(() => {
-        const loadTasks = async () => {
-          try {
-            const formData = {
-                type_search: 1,
-                begin_date: moment(value).format('YYYY-MM-DD')
-            };
-            const response = await getTasksDate(formData);
-            console.log('Tasks fetched:', response); 
-            
-            if (response && response.success) { 
-                const tasksWithFormattedTime = response.tasks.map(task => ({
-                  ...task,
-                  start_time: moment(task.start_time, 'HH:mm:ss').format('HH:mm'), // Convertierto a formato 'HH:mm'
-                  end_time: moment(task.end_time, 'HH:mm:ss').format('HH:mm') // Convertierto a formato 'HH:mm'
-              }));
-              tasksWithFormattedTime.sort(compararHoras); // Ordenando las tareas
-              setTasks(tasksWithFormattedTime); // Actualizando el estado con las tareas ordenadas
-            } else {
-              throw new Error('NO HAY TAREAS ESE DIA / API call was not successful');
-            }
-          } catch (error) {
-            console.log("Error fetching tasks:", error.message);
-            setTasks([]); // Vaciando la lista de tareas en caso de error
-          }
-        };
+      // Asegúrate de pasar la fecha actual a fetchEventos
+      fetchEventos(value);
+    }, [value]); // La dependencia [value] garantiza que useEffect se ejecute cada vez que la fecha cambie
+  
+    const fetchEventos = async (selectedDate) => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          Alert.alert('Error', 'No se encontró el token de autenticación.');
+          return;
+        }
+  
+        const response = await fetch(`http://192.168.0.17:5000/get_events_by_organizer`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+  
+        const allEvents = await response.json();
+        if (response.ok) {
+          // Filtrar los eventos que coincidan con la fecha actual
+          const selectedDay = moment(selectedDate).format('YYYY-MM-DD');
+          const filteredEvents = allEvents.filter(event => {
+            const eventDate = moment(event.fecha, 'DD/MM/YYYY').format('YYYY-MM-DD');
+            return moment(eventDate).isSame(selectedDay);
+          });
+          console.log("VALUE: ", value);
+          console.log("FECHA - SELECCIONADA: ", selectedDay);
+          console.log("EVENTOS DEL DIA SELECCIONADO: ", filteredEvents);
+          setEventos(filteredEvents);
+        } else {
+          Alert.alert('Error', allEvents.error || 'Error al obtener los eventos del organizador.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+      }
+    };
       
-        loadTasks();
-      }, [value]); // Dependencia de useEffect
+
+    {/*
+    // Actualiza las tareas cuando la pestaña gana foco
+    useFocusEffect(
+      React.useCallback(() => {
+        refreshTasks(value);
+      }, [value, refreshTasks])
+    );
+
+    useEffect(() => {
+      refreshTasks(value); // Pasa la fecha seleccionada a refreshTasks
+    }, [value, refreshTasks]);
+
+  */}
       
-*/
     const style_customized = StyleSheet.create({
         barra: {
           flex: 1,
@@ -432,8 +562,8 @@ export default function CalendarViewDiaySem() {
                     <View style={styles.xd}>
                         {horas_text}
                     </View>
-                    {/*<TasksList tasks={tasks} containerHeight={containerHeight} />*/}
-                    </ScrollView>
+                    <TasksList filteredEvents={eventos} containerHeight={containerHeight} />
+                </ScrollView>
             </View>
         </View>
     </SafeAreaView>
@@ -441,11 +571,13 @@ export default function CalendarViewDiaySem() {
 }
 
 const styles = StyleSheet.create({
-
     hora_view: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16, // Espacio a la izquierda de cada hora
+        //backgroundColor:'yellow',
+        //borderWidth:3,
+        //borderColor:'red',
       },
       hora_divisor: {
         flex: 1,
@@ -499,12 +631,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginHorizontal: -4,
   },
   item:{
     flex: 1,
     height: 50,
-    marginHorizontal: 4,
+    marginHorizontal: 3,
     paddingVertical: 6,
     paddingHorizontal: 4,
     borderWidth: 1,
@@ -533,7 +664,7 @@ const styles = StyleSheet.create({
   placeholderContent: {
     borderWidth: 4,
     borderColor: '#e5e7eb',
-    borderStyle: 'solid', //antes de pushear o algo volver a cambiar a 'dashed'
+    borderStyle: 'solid', 
     borderRadius: 9,
     flex: 1,
   },

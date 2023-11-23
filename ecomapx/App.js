@@ -16,6 +16,7 @@ import UserProfile from './components/Profiles/UserProfile';
 import UserProfileOrg from './components/Profiles/UserProfileOrg';
 import CreateEvent from './components/Eventos/Create_event';
 import CalendarViewDiaySem from './components/Calendar/calendarViewDiaySem';
+import CalendarDia from './components/Calendar/dia';
 import Crimes from './data/Crimes';
 import RegisterCrime from './data/Register_Crime';
 
@@ -68,7 +69,7 @@ function MainTabs() {
         name="Profile"
         component={userRole === 'ecoorganizador' ? UserProfileOrg : UserProfile}
       />
-      <Tab.Screen name="Calendar" component={CalendarViewDiaySem} />
+      <Tab.Screen name="Calendar" component={CalendarDia} />
     </Tab.Navigator>
   );
 }
