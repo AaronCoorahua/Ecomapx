@@ -62,47 +62,46 @@ const Event = ({ route }) => {
             }
         };
 
-    
-
         const loadUserRole = async () => {
             const role = await AsyncStorage.getItem('rol');
             console.log('Rol del usuario:', role); 
             setUserRole(role);
-        };
-
-
-        const fetchUserAssistedEvents = async () => {
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                if (token && userRole === 'ecobuscador') {
-                    const response = await fetch('http://192.168.3.4:5000/get_user_assisted_events', {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        setUserAssistedEvents(data.assistedEvents);
-                    } else {
-                        console.error('Error al obtener eventos asistidos');
-                    }
-                }
-            } catch (error) {
-                console.error('Error al cargar eventos asistidos:', error);
-            } finally {
-                setIsLoading(false);  // Finaliza la carga una vez que se obtienen los datos
+        
+            if (role === 'ecobuscador') {
+                fetchUserAssistedEvents();
             }
         };
-
         loadStarCount();
-        loadUserRole().then(fetchUserAssistedEvents);
+        loadUserRole()
+
     }, [event.id, event.puntaje]); // Dependencias del efecto
 
     console.log('starCount:', starCount);
 
-    
+    const fetchUserAssistedEvents = async () => {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (token) {
+                const response = await fetch('http://192.168.3.4:5000/get_user_assisted_events', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setUserAssistedEvents(data.assistedEvents);
+                } else {
+                    console.error('Error al obtener eventos asistidos');
+                }
+            }
+        } catch (error) {
+            console.error('Error al cargar eventos asistidos:', error);
+        } finally {
+            setIsLoading(false);  // Finaliza la carga una vez que se obtienen los datos
+        }
+    };
 
     const isUserRegistered = () => {
         if (!event || !userAssistedEvents) return false;
@@ -119,7 +118,7 @@ const Event = ({ route }) => {
                 Alert.alert('Error', 'No se encontró el token de autenticación.');
                 return;
             }
-            const response = await fetch('http://192.168.0.17:5000/assist_event', {
+            const response = await fetch('http://192.168.3.4:5000/assist_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -167,7 +166,7 @@ const Event = ({ route }) => {
             return;
           }
           
-          const response = await fetch('http://192.168.0.17:5000/update_organizer_average', {
+          const response = await fetch('http://192.168.0.4:5000/update_organizer_average', {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -200,7 +199,7 @@ const Event = ({ route }) => {
     
             console.log('Puntuación seleccionada por el usuario:', tempStarCount);
     
-            const response = await fetch('http://192.168.0.17:5000/rate_event', {
+            const response = await fetch('http://192.168.0.4:5000/rate_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -250,7 +249,7 @@ const Event = ({ route }) => {
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.eventHeader}>
                 <Text style={styles.title}>{event.nombre}</Text>
-                {userRole === 'ecoobuscador' && (isLoading ? (
+                {userRole === 'ecobuscador' && (isLoading ? (
                     <ActivityIndicator size="small" color="#0000ff" />
                 ) : isUserRegistered() ? (
                     <View style={styles.checkButton}>
