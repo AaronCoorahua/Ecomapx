@@ -114,8 +114,8 @@ const TaskItem = ({ event, containerHeight, overlaps}) => {
     const startTime = moment(event.hora, 'HH:mm');
 
     // Asumiendo que la duración está en minutos y es una cadena, conviértela a un número entero.
-    const durationInMinutes = parseInt(event.duracion, 10);
-
+    const durationInMinutes = Math.round(parseFloat(event.duracion));
+    console.log("durationInMinutes", durationInMinutes);
     // Suma la duración a la hora de inicio para obtener la hora de finalización.
     const endTime = moment(startTime).add(durationInMinutes, 'minutes');
 

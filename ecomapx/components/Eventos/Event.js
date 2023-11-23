@@ -75,7 +75,7 @@ const Event = ({ route }) => {
             try {
                 const token = await AsyncStorage.getItem('userToken');
                 if (token && userRole === 'ecobuscador') {
-                    const response = await fetch('http://192.168.3.4:5000/get_user_assisted_events', {
+                    const response = await fetch('http://192.168.0.17:5000/get_user_assisted_events', {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -244,13 +244,15 @@ const Event = ({ route }) => {
     const securityLevel = distritosSecurity.find(d => d.DISTRITOS === event.ubicacion)?.['NIVEL DE INSEGURIDAD'] || 'No disponible';
     const numericSecurityLevel = isNaN(securityLevel) ? 0 : parseInt(securityLevel, 10);
     const securityIconColor = getSecurityIconColor(numericSecurityLevel);
+    const durationInMinutes = Math.round(parseFloat(event.duracion));
+    const Capacidad = Math.round(parseFloat(event.capacidad));
 
     return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : null}>
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.eventHeader}>
                 <Text style={styles.title}>{event.nombre}</Text>
-                {userRole === 'ecoobuscador' && (isLoading ? (
+                {userRole === 'ecobuscador' && (isLoading ? (
                     <ActivityIndicator size="small" color="#0000ff" />
                 ) : isUserRegistered() ? (
                     <View style={styles.checkButton}>
@@ -271,8 +273,8 @@ const Event = ({ route }) => {
             </View>
             <Text style={styles.detail}>{event.descrip_detail}</Text>
             <Text style={styles.tag}>{event.tag}</Text>
-            <Text style={styles.capacity}>Capacidad: {event.capacidad}</Text>
-            <Text style={styles.duration}>Duración: {event.duracion}</Text>
+            <Text style={styles.capacity}>Capacidad: {Capacidad}</Text>
+            <Text style={styles.duration}>Duración: {durationInMinutes}</Text>
             <Text style={styles.date}>{event.fecha}</Text>
             <Text style={styles.time}>{event.hora}</Text>
             <Text style={styles.status}>{event.status}</Text>
