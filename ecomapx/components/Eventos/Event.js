@@ -120,7 +120,7 @@ const Event = ({ route }) => {
                 Alert.alert('Error', 'No se encontró el token de autenticación.');
                 return;
             }
-            const response = await fetch('http://192.168.3.4:5000/assist_event', {
+            const response = await fetch('http://192.168.0.17:5000/assist_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -168,7 +168,7 @@ const Event = ({ route }) => {
             return;
           }
           
-          const response = await fetch('http://192.168.3.4:5000/update_organizer_average', {
+          const response = await fetch('http://192.168.0.17:5000/update_organizer_average', {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -201,7 +201,7 @@ const Event = ({ route }) => {
     
             console.log('Puntuación seleccionada por el usuario:', tempStarCount);
     
-            const response = await fetch('http://192.168.3.4:5000/rate_event', {
+            const response = await fetch('http://192.168.0.17:5000/rate_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
