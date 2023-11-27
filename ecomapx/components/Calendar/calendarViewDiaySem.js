@@ -372,12 +372,27 @@ export default function CalendarViewDiaySem() {
     const totalInterval = 70.0/60;
     //const { tasks, refreshTasks } = useContext(TasksContext);
     const [eventos, setEventos] = useState([]);
+    const [userRole, setUserRole] = useState(null);
 
     useEffect(() => {
+      // Cargar el rol del usuario desde AsyncStorage
+      const loadUserRole = async () => {
+          const role = await AsyncStorage.getItem('rol');
+          setUserRole(role);
+      };
+
+      loadUserRole();
+  }, []);
+
+  useEffect(() => {
       // Asegúrate de pasar la fecha actual a fetchEventos
-      fetchEventos(value);
-    }, [value]); // La dependencia [value] garantiza que useEffect se ejecute cada vez que la fecha cambie
-  
+      if (userRole === 'ecoorganizador') {
+          fetchEventos(value);
+      } else if (userRole === 'ecobuscador') {
+          fetchAssistedEventsDetails(value);
+      }
+  }, [value, userRole]); // Agrega userRole como dependencia
+
     const fetchEventos = async (selectedDate) => {
       try {
         const token = await AsyncStorage.getItem('userToken');
@@ -414,6 +429,45 @@ export default function CalendarViewDiaySem() {
         Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
       }
     };
+
+    const fetchAssistedEventsDetails = async (selectedDate) => {
+      const token = await AsyncStorage.getItem('userToken');
+      const assistedEventIdsString = await AsyncStorage.getItem('assistedEvents');
+      if (token && assistedEventIdsString) {
+          const assistedEventIds = JSON.parse(assistedEventIdsString);
+          // Luego realiza la solicitud con estos IDs
+          try {
+              const response = await fetch('http://192.168.0.17:5000/get_events_details', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ event_ids: assistedEventIds }),
+              });
+
+              const data = await response.json();
+
+              if (response.ok) {
+                const selectedDay = moment(selectedDate).format('YYYY-MM-DD');
+                const filteredEvents = data.filter(event => {
+                  const eventDate = moment(event.fecha, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                  return moment(eventDate).isSame(selectedDay);
+                });
+                console.log("VALUE: ", value);
+                console.log("FECHA - SELECCIONADA: ", selectedDay);
+                console.log("EVENTOS DEL DIA SELECCIONADO: ", filteredEvents);
+                setEventos(filteredEvents);
+              } 
+              else {
+                  Alert.alert('Error', data.error || 'Error al obtener detalles de eventos asistidos.');
+              }
+          } catch (error) {
+              console.error('Error fetching assisted events details:', error);
+              Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+          }
+      }
+  };
       
 
     {/*
