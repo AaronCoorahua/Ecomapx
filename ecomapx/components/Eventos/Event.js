@@ -49,6 +49,8 @@ const Event = ({ route }) => {
     const [userRole, setUserRole] = useState('');
     const [userAssistedEvents, setUserAssistedEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasUserRated, setHasUserRated] = useState(false);
+
 
     useEffect(() => {
         const fetchEventDetails = async () => {
@@ -58,10 +60,20 @@ const Event = ({ route }) => {
                         // Configuración de headers...
                     }
                 });
+    
                 if (response.ok) {
                     const updatedEvent = await response.json();
                     setStarCount(parseFloat(updatedEvent.puntaje)); // Actualizar con el promedio actualizado
                     setTempStarCount(parseFloat(updatedEvent.puntaje)); // También actualiza la puntuación temporal
+    
+                    // Comprueba si el usuario ya ha calificado el evento
+                    const userId = await AsyncStorage.getItem('userId');
+                    if (updatedEvent.ratings2 && updatedEvent.ratings2[userId]) {
+                        setHasUserRated(true);
+                    } else {
+                        setHasUserRated(false);
+                    }
+    
                 } else {
                     console.error('Error al obtener detalles del evento');
                 }
@@ -296,7 +308,9 @@ const Event = ({ route }) => {
                             fractions={1}
                         />
                         <TouchableOpacity style={styles.openButton} onPress={submitRating}>
-                            <Text style={styles.textStyle}>Confirmar Puntuación</Text>
+                            <Text style={styles.textStyle}>
+                                {hasUserRated ? "Actualizar Puntuación" : "Confirmar Puntuación"}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
