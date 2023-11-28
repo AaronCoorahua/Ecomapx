@@ -430,44 +430,41 @@ export default function CalendarViewDiaySem() {
       }
     };
 
-    const fetchAssistedEventsDetails = async (selectedDate) => {
-      const token = await AsyncStorage.getItem('userToken');
-      const assistedEventIdsString = await AsyncStorage.getItem('assistedEvents');
-      if (token && assistedEventIdsString) {
-          const assistedEventIds = JSON.parse(assistedEventIdsString);
-          // Luego realiza la solicitud con estos IDs
-          try {
-              const response = await fetch('http://192.168.0.17:5000/get_events_details', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({ event_ids: assistedEventIds }),
-              });
+  const fetchAssistedEventsDetails = async (selectedDate) => {
+    const token = await AsyncStorage.getItem('userToken');
+    if (token) {
+        try {
+            const response = await fetch('http://192.168.0.17:5000/get_events_details', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                }
+                // No más body ya que el backend filtra basado en el JWT
+            });
 
-              const data = await response.json();
+            const data = await response.json();
 
-              if (response.ok) {
+            if (response.ok) {
                 const selectedDay = moment(selectedDate).format('YYYY-MM-DD');
                 const filteredEvents = data.filter(event => {
-                  const eventDate = moment(event.fecha, 'DD/MM/YYYY').format('YYYY-MM-DD');
-                  return moment(eventDate).isSame(selectedDay);
+                    const eventDate = moment(event.fecha, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                    return moment(eventDate).isSame(selectedDay);
                 });
                 console.log("VALUE: ", value);
                 console.log("FECHA - SELECCIONADA: ", selectedDay);
                 console.log("EVENTOS DEL DIA SELECCIONADO: ", filteredEvents);
                 setEventos(filteredEvents);
-              } 
-              else {
-                  Alert.alert('Error', data.error || 'Error al obtener detalles de eventos asistidos.');
-              }
+            } else {
+                Alert.alert('Error', data.error || 'Error al obtener detalles de eventos asistidos.');
+            }
           } catch (error) {
-              console.error('Error fetching assisted events details:', error);
-              Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+            console.error('Error fetching assisted events details:', error);
+            Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
           }
       }
   };
+
       
 
     {/*

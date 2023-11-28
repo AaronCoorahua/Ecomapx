@@ -104,38 +104,39 @@ export default function UserProfile() {
       fetchUserProfile();
       fetchAssistedEventsDetails();
     }, []);
-        
-    const fetchAssistedEventsDetails = async () => {
-      const token = await AsyncStorage.getItem('userToken');
-      const assistedEventIdsString = await AsyncStorage.getItem('assistedEvents');
-      if (token && assistedEventIdsString) {
-          const assistedEventIds = JSON.parse(assistedEventIdsString);
-          // Luego realiza la solicitud con estos IDs
-          try {
-              const response = await fetch('http://192.168.0.17:5000/get_events_details', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({ event_ids: assistedEventIds }),
-              });
 
-              const data = await response.json();
+  const fetchAssistedEventsDetails = async () => {
+    const token = await AsyncStorage.getItem('userToken');
+    
+    // No necesitas obtener los IDs de los eventos asistidos desde AsyncStorage
+    // ya que el backend determinará los eventos asistidos por el usuario a partir del token JWT
 
-              // Imprime la respuesta en la consola
-              console.log('Detalles de los Eventos a los que va asistir el ecobuscador:', data);
-              if (response.ok) {
+    if (token) {
+        try {
+            const response = await fetch('http://192.168.0.17:5000/get_events_details', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                // No necesitas enviar los IDs de eventos, la petición ya no tiene body
+            });
+
+            const data = await response.json();
+
+            console.log('Detalles de los Eventos a los que va asistir el ecobuscador:', data);
+            if (response.ok) {
                 setEventos(data);
-              } else {
-                  Alert.alert('Error', data.error || 'Error al obtener detalles de eventos asistidos.');
-              }
-          } catch (error) {
-              console.error('Error fetching assisted events details:', error);
-              Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
-          }
-      }
+            } else {
+                Alert.alert('Error', data.error || 'Error al obtener detalles de eventos asistidos.');
+            }
+        } catch (error) {
+            console.error('Error fetching assisted events details:', error);
+            Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+        }
+      } 
   };
+
 
     /* Luego descomentar, ahorita solo quiero probar si funciona bien el redireccionamiento segun el rol del usuario*/
     if (!user) {

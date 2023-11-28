@@ -404,106 +404,78 @@ def rate_event():
     DYNAMODB_CONTEXT.traps[Inexact] = False
     DYNAMODB_CONTEXT.traps[Rounded] = False
     
-    try:
-        current_user_id = get_jwt_identity()
-        event_id = request.json.get('event_id', '')
-        user_rating = Decimal(request.json.get('rating', '0.0'))  # Acepta decimales
-
-        # Verifica que user_rating sea un Decimal válido
-        if not isinstance(user_rating, Decimal):
-            raise TypeError("La puntuación debe ser un número decimal.")
-
-        # Asegúrate de que la calificación está en el rango permitido
-        if user_rating < Decimal('0') or user_rating > Decimal('5'):
-            return jsonify({'error': 'La calificación debe estar entre 0 y 5'}), 400
-
-        table = dynamodb.Table('eventos')
-
-        # Recupera el evento de la base de datos
-        response = table.get_item(Key={'id': event_id})
-        event = response.get('Item', {})
-
-        if not event:
-            return jsonify({'error': 'Event not found'}), 404
-
-        # Aquí asumimos que tienes una lista de todas las puntuaciones para ese evento
-        if 'ratings' not in event:
-            event['ratings'] = []
-
-
-        # Añade la nueva calificación a la lista de calificaciones del evento
-        event['ratings'].append(user_rating)
-        # Calcula el promedio de las calificaciones
-        total_ratings = sum(event['ratings'], Decimal('0'))
-        average = total_ratings / len(event['ratings'])
-        # Redondea el promedio a un solo decimal, asegurándose de que no exceda el máximo
-        new_average = min(average.quantize(Decimal('0.0'), rounding=ROUND_HALF_UP), Decimal('5'))
-
-
-
-        # Actualiza el evento con la nueva media de puntuación
-        update_response = table.update_item(
-            Key={'id': event_id},
-            UpdateExpression="SET puntaje = :val, ratings = :ratings",
-            ExpressionAttributeValues={
-                ':val': new_average,
-                ':ratings': event['ratings']
-            },
-            ReturnValues="UPDATED_NEW"
-        )
-
-        return jsonify({'message': 'Rating updated successfully', 'new_average': str(new_average)}), 200
-    
-    except decimal.Inexact as e:
-        app.logger.error(f"Error inexacto al procesar la puntuación: {e}")
-        return jsonify({'error': 'Error inexacto al procesar la puntuación'}), 500
-    except decimal.Rounded as e:
-        app.logger.error(f"Error de redondeo al procesar la puntuación: {e}")
-        return jsonify({'error': 'Error de redondeo al procesar la puntuación'}), 500
-    except Exception as e:
-        # Imprime la excepción en el log del servidor
-        app.logger.exception("Se produjo un error al procesar la puntuación")
-        # Devuelve un mensaje de error genérico al cliente
-        return jsonify({'error': 'Se produjo un error interno del servidor'}), 500
-    
-
-#METODO PARA ACTUALIZAR LAS ESTRELLAS EN EL PERFIL DE LOS ECOORGANIZADORES:
-
-@app.route('/update_organizer_average', methods=['PATCH'])
-@jwt_required()
-def update_organizer_average():
-    DYNAMODB_CONTEXT.prec = 2
-    DYNAMODB_CONTEXT.rounding = ROUND_HALF_UP
     current_user_id = get_jwt_identity()
-    try:
-        # Obtén la referencia a la tabla de ecoorganizadores
-        table = dynamodb.Table('ecoorganizadores')
+    event_id = request.json.get('event_id', '')
+    user_rating = Decimal(request.json.get('rating', '0.0'))  # Acepta decimales
+
+    # Verifica que user_rating sea un Decimal válido
+    if not isinstance(user_rating, Decimal):
+        raise TypeError("La puntuación debe ser un número decimal.")
+
+    # Asegúrate de que la calificación está en el rango permitido
+    if user_rating < Decimal('0') or user_rating > Decimal('5'):
+        return jsonify({'error': 'La calificación debe estar entre 0 y 5'}), 400
+    table = dynamodb.Table('eventos')
+    # Recupera el evento de la base de datos
+    response = table.get_item(Key={'id': event_id})
+    event = response.get('Item', {})
+    if not event:
+        return jsonify({'error': 'Event not found'}), 404
+    # Inicializa ratings2 como un mapa si no existe
+    if 'ratings2' not in event or not isinstance(event['ratings2'], dict):
+        event['ratings2'] = {}
+    # Actualiza la calificación para el usuario actual en ratings2
+    event['ratings2'][current_user_id] = user_rating
+
+    # Calcula el nuevo promedio
+    total_ratings = sum(Decimal(str(r)) for r in event['ratings2'].values())
+    new_average = total_ratings / len(event['ratings2'])
+    new_average = min(new_average.quantize(Decimal('0.0'), rounding=ROUND_HALF_UP), Decimal('5'))
+    # Actualiza el evento con el nuevo promedio y ratings2 actualizado
+    update_response = table.update_item(
+        Key={'id': event_id},
+        UpdateExpression="SET puntaje = :val, ratings2 = :ratings",
+        ExpressionAttributeValues={
+            ':val': new_average,
+            ':ratings': event['ratings2']
+        },
+            ReturnValues="UPDATED_NEW"
+    )
+    
+    #NUEVO:
+    # Obtén el ID del ecoorganizador del evento que está siendo calificado
+    ecoorganizador_id = event.get('id_organizador', None)
+    
+    if ecoorganizador_id:
+        update_organizer_average(ecoorganizador_id)
         
-        # Recupera el ecoorganizador de la base de datos
-        response = table.get_item(Key={'id': current_user_id})
-        organizer = response.get('Item', {})
+    return jsonify({'message': 'Rating updated successfully', 'new_average': str(new_average)}), 200
+
+def update_organizer_average(ecoorganizador_id):
+    table_organizadores = dynamodb.Table('ecoorganizadores')
+
+    response_organizador = table_organizadores.get_item(Key={'id': ecoorganizador_id})
+    organizer = response_organizador.get('Item', {})
+    
+    if 'created_events' in organizer and organizer['created_events']:
+        total_score = Decimal('0')
+        event_count = len(organizer['created_events'])
         
-        if not organizer:
-            return jsonify({'error': 'Organizer not found'}), 404
-        
-        # Calcula el nuevo promedio basado en los eventos creados
-        if 'created_events' in organizer and organizer['created_events']:
-            total_score = Decimal('0')
-            for event_id in organizer['created_events']:
-                event_table = dynamodb.Table('eventos')
-                event_response = event_table.get_item(Key={'id': event_id})
-                event = event_response.get('Item', {})
-                if 'puntaje' in event:
-                    total_score += Decimal(event['puntaje'])
+        for event_id in organizer['created_events']:
+            event_table = dynamodb.Table('eventos')
+            event_response = event_table.get_item(Key={'id': event_id})
+            event = event_response.get('Item', {})
             
-            # Aquí asumimos que 'created_events' es una lista de IDs de eventos
-            new_average = (total_score / len(organizer['created_events'])).quantize(Decimal('0.0'), rounding=ROUND_HALF_UP)
+            if 'puntaje' in event:
+                total_score += Decimal(event['puntaje'])
+
+        if event_count > 0:
+            new_average = (total_score / event_count).quantize(Decimal('0.0'), rounding=ROUND_HALF_UP)
         else:
             new_average = Decimal('0')
 
-        # Actualiza el promedio del ecoorganizador
-        update_response = table.update_item(
-            Key={'id': current_user_id},
+        update_response = table_organizadores.update_item(
+            Key={'id': ecoorganizador_id},
             UpdateExpression="SET promedio = :val",
             ExpressionAttributeValues={
                 ':val': new_average
@@ -511,24 +483,16 @@ def update_organizer_average():
             ReturnValues="UPDATED_NEW"
         )
 
-        # Verifica si el ecoorganizador ha alcanzado por primera vez las 5 estrellas en su perfil
         if new_average == Decimal('5') and not organizer.get('haAlcanzadoCincoEstrellas', False):
-            # Actualiza el campo haAlcanzadoCincoEstrellas si es la primera vez que alcanza las 5 estrellas
-            table.update_item(
-                Key={'id': current_user_id},
+            update_response = table_organizadores.update_item(
+                Key={'id': ecoorganizador_id},
                 UpdateExpression='SET haAlcanzadoCincoEstrellas = :val',
                 ExpressionAttributeValues={
                     ':val': True
-                }
-        )
-
-        return jsonify({'message': 'Organizer average updated successfully', 'new_average': str(new_average)}), 200
+                },
+                ReturnValues="UPDATED_NEW"
+            )
     
-    except Exception as e:
-        # Imprime la excepción en el log del servidor
-        app.logger.exception("Se produjo un error al actualizar el promedio del organizador")
-        # Devuelve un mensaje de error genérico al cliente
-        return jsonify({'error': 'Se produjo un error interno del servidor'}), 500
     
 
 #METODO PARA RECUPERAR LA CANTIDAD ESTRELLAS EN EL PERFIL DEL ECOORGANIZADOR:
@@ -568,24 +532,32 @@ def get_events_by_organizer():
 #METODO PARA OBTENER LOS DETALLES DE LOS EVENTOS A LOS QUE ESTAN ASISTIENDO LOS ECOBUSCADORES:
 
 @app.route('/get_events_details', methods=['POST'])
+@jwt_required()
 def get_events_details():
     try:
-        event_ids = request.json.get('event_ids', [])
-        table = dynamodb.Table('eventos')
+        current_user_id = get_jwt_identity()
+        user_table = dynamodb.Table('ecobuscadores')
+        event_table = dynamodb.Table('eventos')
         events_details = []
 
-        for event_id in event_ids:
-            response = table.get_item(Key={'id': event_id})
+        # Obtener los eventos asistidos por el usuario
+        user_response = user_table.get_item(Key={'id': current_user_id})
+        user = user_response.get('Item', {})
+        user_assisted_events = user.get('assisted_events', [])
+
+        for event_id in user_assisted_events:
+            response = event_table.get_item(Key={'id': event_id})
             event = response.get('Item')
             if event:
                 events_details.append(event)
 
-        return jsonify(events_details), 200  # Aquí devuelves directamente la lista
+        return jsonify(events_details), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
+#PARA LOS POSTS:
 @app.route('/listEvents', methods=['GET'])
 @jwt_required()
 def list_events():
@@ -603,6 +575,26 @@ def list_events():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+#PARA RECUPERAR LA INFO DEL EVENTO SELECCIONADO EN VER MAS EN LOS POSTS:
+@app.route('/event_details/<event_id>', methods=['GET'])
+def get_event_details(event_id):
+    try:
+        table = dynamodb.Table('eventos')
+        response = table.get_item(Key={'id': event_id})
+        event = response.get('Item')
+
+        if not event:
+            return jsonify({'error': 'Event not found'}), 404
+
+        # Aquí puedes añadir cualquier lógica adicional si es necesario
+        # Por ejemplo, calcular nuevamente el promedio si lo necesitas
+
+        return jsonify(event), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/add_review', methods=['POST'])
 @jwt_required()

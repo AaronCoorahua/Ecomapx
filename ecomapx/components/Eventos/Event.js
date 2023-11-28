@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView, Alert, Modal,TouchableOpacity,  ActivityIndicator} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect} from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
 import distritosSecurity from '../../data/distritos.json';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -38,49 +38,61 @@ const StarDisplay = ({ new_average }) => {
 
 const Event = ({ route }) => {
     const navigation = useNavigation();
-    const { event } = route.params;
-   
+    //const { event } = route.params;
+    const { event: initialEvent } = route.params;
+    const [event, setEvent] = useState(initialEvent); // Nuevo estado para el evento
     // Estados para controlar la puntuación y la visibilidad del modal
     // Asegúrate de que starCount se inicializa como un número
-    const [starCount, setStarCount] = useState(parseFloat(event.puntaje)); // Puntuación actual
-    const [tempStarCount, setTempStarCount] = useState(starCount); // Puntuación temporal para el modal
+    const [starCount, setStarCount] = useState(0.0); // Puntuación actual
+    const [tempStarCount, setTempStarCount] = useState(0.0); // Puntuación temporal para el modal
     const [modalVisible, setModalVisible] = useState(false);
     const [userRole, setUserRole] = useState('');
     const [userAssistedEvents, setUserAssistedEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
- 
 
     useEffect(() => {
-        // Cargar la puntuación guardada al iniciar el componente
-        const loadStarCount = async () => {
-            const savedStarCount = await AsyncStorage.getItem('starCount-' + event.id);
-            if (savedStarCount !== null) {
-                setStarCount(parseFloat(savedStarCount));
-            } else {
-                // Si no hay una puntuación guardada, usa la puntuación inicial del evento
-                setStarCount(parseFloat(event.puntaje));
+        const fetchEventDetails = async () => {
+            try {
+                const response = await fetch(`http://192.168.0.17:5000/event_details/${event.id}`, {
+                    headers: {
+                        // Configuración de headers...
+                    }
+                });
+                if (response.ok) {
+                    const updatedEvent = await response.json();
+                    setStarCount(parseFloat(updatedEvent.puntaje)); // Actualizar con el promedio actualizado
+                    setTempStarCount(parseFloat(updatedEvent.puntaje)); // También actualiza la puntuación temporal
+                } else {
+                    console.error('Error al obtener detalles del evento');
+                }
+            } catch (error) {
+                console.error('Error al conectar con el backend', error);
             }
         };
+    
+        fetchEventDetails();
+    }, [event.id]);
+    
 
-        const loadUserRole = async () => {
+    useEffect(() => {
+        const loadUserRoleandEvents = async () => {
             const role = await AsyncStorage.getItem('rol');
             console.log('Rol del usuario:', role); 
             setUserRole(role);
         
             if (role === 'ecobuscador') {
-                fetchUserAssistedEvents();
+                const token = await AsyncStorage.getItem('userToken');
+                fetchUserAssistedEvents(token);
+            } else {
+                // Limpiar el estado para usuarios no ecobuscadores
+                setUserAssistedEvents([]);
             }
         };
-        loadStarCount();
-        loadUserRole()
+        loadUserRoleandEvents();
+    }, []);
 
-    }, [event.id, event.puntaje]); // Dependencias del efecto
-
-    console.log('starCount:', starCount);
-
-    const fetchUserAssistedEvents = async () => {
+    const fetchUserAssistedEvents = async (token) => {
         try {
-            const token = await AsyncStorage.getItem('userToken');
             if (token) {
                 const response = await fetch('http://192.168.0.17:5000/get_user_assisted_events', {
                     method: 'GET',
@@ -135,6 +147,7 @@ const Event = ({ route }) => {
                 // Actualiza el estado y luego actualiza AsyncStorage
                 setUserAssistedEvents(prevEvents => {
                     const updatedEvents = [...prevEvents, event.id]; // Asegúrate de que sea solo el ID si así lo manejas
+                     console.log("Eventos a que el usuario va asistir (updatedEvents): ", updatedEvents);
                     AsyncStorage.setItem('assistedEvents', JSON.stringify(updatedEvents));
                     return updatedEvents;
                 });
@@ -157,41 +170,11 @@ const Event = ({ route }) => {
         setModalVisible(true);
     };
 
-    // Función para actualizar el promedio del ecoorganizador
-    const updateOrganizerAverage = async () => {
-        try {
-          const token = await AsyncStorage.getItem('userToken');
-          if (!token) {
-            Alert.alert('Error', 'No se encontró el token de autenticación.');
-            return;
-          }
-          
-          const response = await fetch('http://192.168.0.17:5000/update_organizer_average', {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            // No es necesario enviar un cuerpo (body) si el cálculo se realiza en el backend
-          });
-  
-          const responseData = await response.json();
-  
-          if (response.ok) {
-            // Actualiza el estado o UI si es necesario
-            Alert.alert('Éxito', 'Promedio actualizado correctamente.');
-          } else {
-            Alert.alert('Error', responseData.error || 'Error al actualizar el promedio.');
-          }
-        } catch (error) {
-          console.error('Error al actualizar el promedio:', error);
-          Alert.alert('Error', 'No se pudo conectar al servidor para actualizar el promedio.');
-        }
-    };
-
     const submitRating = async () => {
         try {
             const token = await AsyncStorage.getItem('userToken');
+            const userId = await AsyncStorage.getItem('userId'); // Recuperar el ID del usuario almacenado
+            console.log("USER ID: ", userId);
             if (!token) {
                 Alert.alert('Error', 'No se encontró el token de autenticación.');
                 return;
@@ -206,34 +189,34 @@ const Event = ({ route }) => {
                     'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                    event_id: event.id,
-                    rating: tempStarCount,
+                    event_id: event.id, // Asegúrate de que 'event.id' sea el ID correcto del evento que se va a calificar
+                    rating: tempStarCount, // 'tempStarCount' debe ser la calificación seleccionada por el usuario
+                    user_id: userId, // Añade el ID del usuario en el cuerpo de la solicitud
                 }),
             });
     
             if (response.ok) {
                 const responseData = await response.json();
+                const userId = await AsyncStorage.getItem('userId');
                 console.log('Estrellas Update:', responseData);
+                setEvent({ ...event, puntaje: responseData.new_average }); // Actualizar el evento con el nuevo promedio
                 const newAverage = parseFloat(responseData.new_average); // Convierte la nueva media a un número si es una cadena
                 setStarCount(newAverage); // Actualiza el estado con el nuevo promedio
-                await AsyncStorage.setItem(`starCount-${event.id}`, newAverage.toString()); // Guarda el nuevo promedio como una cadena
+                await AsyncStorage.setItem(`starCount-${event.id}-${userId}`, newAverage.toString()); // Guarda la calificación del usuario como una cadena
                 Alert.alert('Éxito', 'Puntuación actualizada correctamente');
-                // Ahora llama a la función para actualizar el promedio del ecoorganizador
-                await updateOrganizerAverage(); // Esta función se debe definir o importar en Event.js
             } else {
-                // Si la respuesta no fue exitosa, maneja el error
-                Alert.alert('Error al enviar la puntuación');
+                const errorData = await response.json();
+                Alert.alert('Error', errorData.error || 'Error al enviar la puntuación');
             }
         } catch (error) {
-            // Si hubo un error en la solicitud o al procesar la respuesta
             console.error('Error al enviar la puntuación:', error);
-            Alert.alert('Error', error.toString());
+            Alert.alert('Error', 'No se pudo conectar al servidor para actualizar la puntuación.');
         }
     
         // Cierra el modal después de intentar enviar la puntuación
         setModalVisible(false);
     };
-
+    
 
 
     if (!event) {

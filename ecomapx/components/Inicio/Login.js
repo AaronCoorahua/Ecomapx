@@ -48,8 +48,8 @@ export default function Login({ onSuccessfulLogin }) {
         if (data.message === 'Logged in successfully') {
           console.log('Inicio de sesión exitoso. Navegando a Posts...');
           await AsyncStorage.setItem('userToken', data.token);
-          //onSuccessfulLogin();
           await AsyncStorage.setItem('rol', userType);
+          await AsyncStorage.setItem('userId', data.id); // Almacenar el ID del usuario
           navigation.navigate('MainTabs')
         } else {
           Alert.alert('Error', data.error || 'Error al iniciar sesión.');
