@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, ScrollView, Image, TouchableOpacity, TouchableWithoutFeedback, KeyboardAvoidingView, Keyboard} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import {LinearGradient} from 'expo-linear-gradient';
 import {iconOffset} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -14,6 +14,16 @@ export default function Login({ onSuccessfulLogin }) {
   const [contrasena, setContrasena] = useState(''); //Estado para la contraseña
   const [userType, setUserType] = useState('');  //'ecobuscador' or 'ecoorganizador'
   const navigation = useNavigation();
+
+  // Agregar useEffect para limpiar el formulario al montar el componente
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Limpiando el formulario de login');
+      setEmail('');
+      setContrasena('');
+      setUserType('');
+    }, [])
+  );
 
   const handleEmailChange = (text) => {
     setEmail(text);
@@ -80,7 +90,7 @@ export default function Login({ onSuccessfulLogin }) {
   if (!fontsLoaded) {
     return null;
   }
-  
+
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
