@@ -1,9 +1,14 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet,ScrollView, Alert, FlatList} from 'react-native';
+import { View, Text, Image, StyleSheet,ScrollView, Alert, FlatList, ActivityIndicator, TouchableOpacity} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import RedesSocialesIcon from '../../assets/redes-sociales.png';
+import * as ImagePicker from 'expo-image-picker';
+// Importaciones para Firebase:
+import { storage } from '../config/firebaseConfig'; 
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
 
 const user1 = {
@@ -60,6 +65,107 @@ const MedalsDisplay = ({ user, eventsData }) => {
   );
 };
 
+const updatePhoto = async (userId, userType, newPhotoUrl, token) => {
+  try {
+    const response = await fetch('http://192.168.0.17:5000/update_photo', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        photo: newPhotoUrl, // La nueva URL de la foto
+        userType: userType, // El rol del usuario (ecobuscador o ecoorganizador)
+      }),
+    });
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      Alert.alert('Éxito', 'Foto actualizada correctamente');
+      return { success: true, photo: newPhotoUrl };
+    } else {
+      console.error('Error response:', responseData);
+      Alert.alert('Error', responseData.error || 'Error al actualizar la foto');
+      return { success: false, error: responseData.error || 'Error desconocido' };
+    }
+  } catch (error) {
+    console.error('Error al actualizar la foto:', error);
+    Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
+    return { success: false, error: error.toString() };
+  }
+};
+
+// Este es tu componente de perfil
+const ProfileComponent = ({ user }) => {
+  // Este estado mantendrá la URL de la foto de perfil actual
+  const [profilePhoto, setProfilePhoto] = useState(user.foto);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Este manejador se activará cuando el usuario quiera cambiar su foto de perfil
+
+  const handleEditPhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Sorry, we need camera roll permissions to make this work!');
+        return;
+      }
+  
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setIsUploading(true); // Indicador de carga
+        const uri = result.assets[0].uri;
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const imageName = `profile_${user.id}_${new Date().toISOString()}.jpg`;
+        const imageRef = ref(storage, `images/${imageName}`);
+
+        await uploadBytes(imageRef, blob);
+        const downloadURL = await getDownloadURL(imageRef);
+        console.log("DOWNLOAD",downloadURL);
+        setProfilePhoto(downloadURL);
+        const token = await AsyncStorage.getItem('userToken');
+        // Llama a la función updatePhoto con todos los argumentos necesarios
+        const updateResult = await updatePhoto(user.id, user.rol, downloadURL, token);
+        console.log('VEAMOS:', updateResult);
+        console.log('foto URL:', updateResult.photo);
+        if (updateResult.success) {
+          //console.log('Perfil actualizado:', updateResult.profile_updated);
+          console.log('Perfil actualizado con la nueva foto URL:', updateResult.photo);
+        } else {
+          throw new Error(updateResult.error || 'Error al actualizar el perfil.');
+        }
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'An error occurred while picking the image.');
+    } finally {
+      setIsUploading(false); // Finaliza el indicador de carga
+    }
+  };
+
+  return (
+    <View style={styles.profileContainer}>
+    {isUploading ? (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#CFD8DC" />
+      </View>
+    ) : (
+      <Image source={{ uri: profilePhoto }} style={styles.profileImage} />
+    )}
+      <TouchableOpacity style={styles.editIcon} onPress={handleEditPhoto}>
+        <FontAwesome5 name="pencil-alt" size={15} color="white" style={styles.iconStyle}/>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 
 export default function UserProfile() {
@@ -153,15 +259,9 @@ export default function UserProfile() {
       <ScrollView style={styles.container}>
         {/* Banner de fondo */}
         <Image source={{ uri: bannerImage }} style={styles.bannerImage} />
-        
+
         {/* Contenedor para la imagen de perfil */}
-        <View style={styles.profileImageContainer}>
-          {/* Imagen de perfil */}
-          <Image
-            source={{ uri: user.foto }}
-            style={styles.profileImage}
-          />
-        </View>
+        <ProfileComponent user={user} />
     
         {/* Contenedor principal de texto */}
         <View style={styles.textContainer}>
@@ -327,7 +427,39 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     borderWidth: 2,
     borderColor: 'rgb(57, 168, 88)', // Borde verde claro
-    backgroundColor: 'red',
+  },
+  //cambiar si es necesario
+  loadingContainer: {
+    width: 100, // Cambia el ancho de la imagen
+    height: 100, // Cambia la altura de la imagen
+    borderRadius: 100, // Asegúrate de que el radio de borde sea la mitad del ancho/altura
+    backgroundColor: 'rgb(57, 168, 88)', // Un color de fondo para el círculo
+    justifyContent: 'center', // Centra el indicador verticalmente
+    alignItems: 'center', // Centra el indicador horizontalmente
+  },
+  /*Cambie*/
+  editIcon: {
+    // Estilos para el botón que contiene el icono
+    position: 'absolute', // Puedes ajustar la posición según necesites
+    right: 2,
+    bottom: 5,
+    backgroundColor: 'rgb(80, 140, 100)', // Color de fondo del círculo
+    borderRadius: 15, // La mitad del ancho y alto para hacerlo circular
+    width: 30, // Ancho del círculo
+    height: 30, // Alto del círculo
+    justifyContent: 'center', // Centra el icono horizontalmente
+    alignItems: 'center', // Centra el icono verticalmente
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  iconStyle: {
+    // Estilos para el icono en sí
   },
   textContainer: {
     top: 42,
