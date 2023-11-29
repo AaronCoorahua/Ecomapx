@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, FlatList, ActivityIndicator, Alert} from 'react-native';
 import RedesSocialesIcon from '../../assets/redes-sociales.png';
 import localImage from '../../assets/estrella.png';
-import { useNavigation } from '@react-navigation/native'; // Importa useNavigation
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Rating } from 'react-native-ratings';
 import AntDesign from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
@@ -199,9 +199,8 @@ export default function UserProfileOrg() {
 
   const [user, setUser] = useState(null);
   const [eventos, setEventos] = useState([]);
-
-    useEffect(() => {
-      const fetchUserProfileAndEvents = async () => {
+  
+  const fetchUserProfileAndEvents = async () => {
         try {
           const token = await AsyncStorage.getItem('userToken');
           if (!token) {
@@ -269,11 +268,16 @@ export default function UserProfileOrg() {
           console.error('Error:', error);
           Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
         }
-      };
-    
-      fetchUserProfileAndEvents();
-    }, []);
+  };
 
+  useFocusEffect(
+    useCallback(() => {
+        // Llama a la función para recuperar la información cada vez que la pantalla entra en foco
+        fetchUserProfileAndEvents();
+
+        // No es necesario un return aquí, ya que no estamos desuscribiendo de ningún evento
+    }, [])
+  );
         
     /* Luego descomentar, ahorita solo quiero probar si funciona bien el redireccionamiento segun el rol del usuario*/
     if (!user) {

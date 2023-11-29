@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet,ScrollView, Alert, FlatList} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import RedesSocialesIcon from '../../assets/redes-sociales.png';
 
 
@@ -66,7 +67,6 @@ export default function UserProfile() {
     const [user, setUser] = useState(null);
     const [eventos, setEventos] = useState([]);
 
-    useEffect(() => {
       // Función para recuperar el perfil del usuario
       const fetchUserProfile = async () => {
         try {
@@ -100,10 +100,6 @@ export default function UserProfile() {
           Alert.alert('Error', 'Hubo un problema al conectarse con el servidor.');
         }
       };
-    
-      fetchUserProfile();
-      fetchAssistedEventsDetails();
-    }, []);
 
   const fetchAssistedEventsDetails = async () => {
     const token = await AsyncStorage.getItem('userToken');
@@ -136,6 +132,16 @@ export default function UserProfile() {
         }
       } 
   };
+
+  useFocusEffect(
+    useCallback(() => {
+        // Llama a las funciones para recuperar la información cada vez que la pantalla entra en foco
+        fetchUserProfile();
+        fetchAssistedEventsDetails();
+
+        // No es necesario un return aquí, ya que no estamos desuscribiendo de ningún evento
+    }, [])
+);
 
 
     /* Luego descomentar, ahorita solo quiero probar si funciona bien el redireccionamiento segun el rol del usuario*/
