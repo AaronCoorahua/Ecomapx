@@ -2,13 +2,18 @@ import React from 'react';
 import { View, Text, Image, StyleSheet,ScrollView, Alert, FlatList, ActivityIndicator, TouchableOpacity} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import RedesSocialesIcon from '../../assets/redes-sociales.png';
 import * as ImagePicker from 'expo-image-picker';
 // Importaciones para Firebase:
 import { storage } from '../config/firebaseConfig'; 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import * as Font from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+
+
 
 
 const user1 = {
@@ -34,6 +39,14 @@ const diezEventosMedal = "https://media.discordapp.net/attachments/1155323431915
 // Lista de intereses
 const interes1 = 'https://media.discordapp.net/attachments/952775750728155136/1161435237075656704/montana.png?ex=653849da&is=6525d4da&hm=8780d957d9b6b2bb5289227f94a35776e573703c6c903b901510d69f6c42f7a1&=&width=423&height=423';
 const interes2 = 'https://media.discordapp.net/attachments/952775750728155136/1161435260253372507/reciclar-senal.png?ex=653849e0&is=6525d4e0&hm=59e605288ece681af3f60348e92856c8b60585612cc0bf31440de50af6ec3885&=&width=423&height=423';
+
+
+// Esta es una función para cargar las fuentes
+const fetchFonts = () => {
+  return Font.loadAsync({
+    'Gabarito': require('../../assets/fonts/Gabarito-VariableFont_wght.ttf'),
+  });
+};
 
 const MedalsDisplay = ({ user, eventsData }) => {
   const showEcoPioneroMedal = user.assisted_events && user.assisted_events.length >= 1; //Medalla x asistir a su primer evento
@@ -169,9 +182,10 @@ const ProfileComponent = ({ user }) => {
 
 
 export default function UserProfile() {
-  
+
     const [user, setUser] = useState(null);
     const [eventos, setEventos] = useState([]);
+    const navigation = useNavigation();
 
       // Función para recuperar el perfil del usuario
       const fetchUserProfile = async () => {
@@ -247,7 +261,39 @@ export default function UserProfile() {
 
         // No es necesario un return aquí, ya que no estamos desuscribiendo de ningún evento
     }, [])
-);
+  );
+
+    const handleLogout = async () => {
+      try {
+        // Elimina el token de AsyncStorage para cerrar la sesión
+        await AsyncStorage.removeItem('userToken');
+        // Registra un mensaje en la consola cuando el usuario cierra sesión
+        console.log('Usuario cerró sesión exitosamente');
+        // Redirige al usuario a la pantalla de inicio de sesión
+        navigation.navigate('Login')
+      } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+      }
+    };
+
+    useEffect(() => {
+      // Previene la auto-ocultación de SplashScreen al inicio
+      SplashScreen.preventAutoHideAsync();
+  
+      const prepare = async () => {
+        try {
+          // Carga las fuentes y cualquier otro recurso aquí
+          await fetchFonts();
+        } catch (e) {
+          console.warn('Error al cargar los recursos:', e);
+        } finally {
+          // Oculta la pantalla de carga independientemente del resultado
+          SplashScreen.hideAsync();
+        }
+      };
+  
+      prepare();
+    }, []);
 
 
     /* Luego descomentar, ahorita solo quiero probar si funciona bien el redireccionamiento segun el rol del usuario*/
@@ -347,12 +393,61 @@ export default function UserProfile() {
             )}
           />
         </View>
+
+        {/*Container Logout*/}
+        <View style={styles.logoutContainer}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <View style={styles.iconCircle}>
+            <MaterialIcons name="logout" size={20} color='rgb(80, 140, 100)' />
+          </View>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
       </ScrollView>
     );
     
 }
 
 const styles = StyleSheet.create({
+  logoutContainer: {
+    width: '100%', // Ocupa todo el ancho disponible
+    alignItems: 'center', // Alinea los elementos internos al centro horizontalmente
+    justifyContent: 'flex-end', // Alinea el botón de logout al final del contenedor verticalmente
+    padding: 10, // Espacio alrededor del botón para evitar que se pegue a los bordes
+    paddingVertical:28,
+    marginTop:-9,
+  },
+  logoutButton: {
+    flexDirection: 'row', // Icono y texto en fila
+    alignItems: 'center', // Alineación vertical
+    backgroundColor: "rgb(124, 194, 66)",
+    padding: 10,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  iconCircle: {
+    width: 30, // Tamaño del círculo
+    height: 30, // Tamaño del círculo
+    borderRadius: 10, // La mitad del tamaño para que sea un círculo
+    borderColor: 'rgb(80, 140, 100)', // Color del borde
+    borderWidth: 2, // Grosor del borde
+    justifyContent: 'center', // Centrar ícono verticalmente
+    alignItems: 'center', // Centrar ícono horizontalmente
+    marginRight: 7, // Espacio entre el ícono y el texto
+  },
+  logoutText: {
+    color: 'rgb(80, 140, 100)', // Color del texto
+    fontSize: 19, // Tamaño del texto
+    fontFamily: 'Gabarito', // Asegúrate de que la fuente está cargada
+    fontWeight: 'bold',
+  },
   // Estilos para la sección "Mis Eventos"
   misEventosContainer: {
     marginVertical: 10,
