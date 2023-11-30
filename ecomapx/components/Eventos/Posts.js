@@ -7,39 +7,19 @@ import {
     TouchableOpacity,
     FlatList
 } from 'react-native';
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { useEvents } from '../Context/EventContext';
 
 const Posts = () => {
-    const [events, setEvents] = useState([]);
+    const { events, updateEvents } = useEvents();
     const navigation = useNavigation();
 
+    // En Posts.js
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Obteniendo el token del localStorage
-                const token = await AsyncStorage.getItem('userToken');
+        updateEvents();
+    }, []); // Un array de dependencias vacío significa que este efecto solo se ejecutará una vez al montar el componente
+  
 
-                const response = await fetch('http://192.168.0.17:5000/listEvents', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                setEvents(data);
-            } catch (error) {
-                console.error("Error fetching events:", error);
-            }
-        };
-
-        fetchData();
-    }, []);
     return (
         <FlatList
             data={events}

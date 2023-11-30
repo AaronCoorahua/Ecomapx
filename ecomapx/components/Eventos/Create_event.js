@@ -15,8 +15,7 @@ import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
-
-
+import { useEvents } from '../Context/EventContext';
 
 
 export default function CreateEvent() {
@@ -45,7 +44,10 @@ export default function CreateEvent() {
     longitude: -77.0427934,
   });
 
+  const { updateEvents } = useEvents(); // Utiliza el hook useEvents para acceder a la función de actualización
+
   const navigation = useNavigation();
+
 
   const handleSubmit = async () => {
     try {
@@ -84,9 +86,10 @@ export default function CreateEvent() {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      const data = await response.json();
+      // Si la creación del evento es exitosa, actualiza la lista de eventos
       Alert.alert("Éxito", "Evento creado con éxito!");
-      navigation.goBack();
+      updateEvents(); // Llama a updateEvents para actualizar la lista global de eventos
+      navigation.goBack(); // Vuelve a la pantalla anterior
 
     } catch (error) {
       Alert.alert("Error", "Hubo un error al crear el evento.");

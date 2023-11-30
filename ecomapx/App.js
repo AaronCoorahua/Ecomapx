@@ -19,6 +19,7 @@ import CalendarViewDiaySem from './components/Calendar/calendarViewDiaySem';
 import CalendarDia from './components/Calendar/dia';
 import Crimes from './data/Crimes';
 import RegisterCrime from './data/Register_Crime';
+import { EventProvider } from './components/Context/EventContext';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -76,6 +77,7 @@ function MainTabs() {
 
 export default function App() {
   return (
+    <EventProvider>
     <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen name="Inicio" component={Inicio} options={{ headerShown: false }} />
@@ -89,5 +91,6 @@ export default function App() {
         {/* Si tienes otras pantallas, asegúrate de agregarlas aquí */}
       </Stack.Navigator>
     </NavigationContainer>
+    </EventProvider>
   );
 }
