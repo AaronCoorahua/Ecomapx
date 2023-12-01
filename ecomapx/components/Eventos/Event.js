@@ -287,18 +287,19 @@ const Event = ({ route }) => {
             <Text style={getStatusStyle(event.status)}>{event.status}</Text>
             <Text style={styles.review}>Reseñas: {event.resenas}</Text>
             <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
-            {/* Solo mostrar la opción de puntuar si el usuario es un ecobuscador */}
-            {userRole === 'ecobuscador' && (
+            {/* Mostrar la puntuación del evento para todos los usuarios */}
             <View style={styles.ratingContainer}>
                 <StarDisplay new_average={starCount} />
+                {/* Solo mostrar la opción de puntuar si el usuario es un ecobuscador */}
+                {userRole === 'ecobuscador' && (
                 <TouchableOpacity style={[styles.rateButton]} onPress={openModalToRate}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14}}>
                 <FontAwesome5 name="star" size={21.6} color="#2268D6" marginRight={5}/>
                 <Text style={{ color: '#2268D6', fontSize:17}}>Puntuar</Text>
                 </View>
                 </TouchableOpacity>
+                )}
             </View>
-            )}
             <Modal
                 animationType="slide"
                 transparent={true}
