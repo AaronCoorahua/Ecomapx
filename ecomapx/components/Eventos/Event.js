@@ -287,6 +287,8 @@ const Event = ({ route }) => {
             <Text style={getStatusStyle(event.status)}>{event.status}</Text>
             <Text style={styles.review}>Reseñas: {event.resenas}</Text>
             <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
+            {/* Solo mostrar la opción de puntuar si el usuario es un ecobuscador */}
+            {userRole === 'ecobuscador' && (
             <View style={styles.ratingContainer}>
                 <StarDisplay new_average={starCount} />
                 <TouchableOpacity style={[styles.rateButton]} onPress={openModalToRate}>
@@ -295,8 +297,8 @@ const Event = ({ route }) => {
                 <Text style={{ color: '#2268D6', fontSize:17}}>Puntuar</Text>
                 </View>
                 </TouchableOpacity>
-               
             </View>
+            )}
             <Modal
                 animationType="slide"
                 transparent={true}
