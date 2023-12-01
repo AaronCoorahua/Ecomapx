@@ -36,6 +36,19 @@ const StarDisplay = ({ new_average }) => {
       );
   };
 
+  const getStatusStyle = (status) => {
+    switch (status) {
+        case 'Por Empezar':
+            return styles.statusPorEmpezar;
+        case 'En Progreso':
+            return styles.statusEnProgreso;
+        case 'Finalizado':
+            return styles.statusFinalizado;
+        default:
+            return styles.statusDefault;
+    }
+};
+
 const Event = ({ route }) => {
     const navigation = useNavigation();
     //const { event } = route.params;
@@ -271,7 +284,7 @@ const Event = ({ route }) => {
             <Text style={styles.duration}>Duración: {durationInMinutes}</Text>
             <Text style={styles.date}>{event.fecha}</Text>
             <Text style={styles.time}>{event.hora}</Text>
-            <Text style={styles.status}>{event.status}</Text>
+            <Text style={getStatusStyle(event.status)}>{event.status}</Text>
             <Text style={styles.review}>Reseñas: {event.resenas}</Text>
             <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
             <View style={styles.ratingContainer}>
@@ -345,6 +358,26 @@ const Event = ({ route }) => {
 }
 
 const styles = StyleSheet.create({
+    statusPorEmpezar: {
+        fontSize: 14,
+        color: 'green',
+        marginTop: 10,
+    },
+    statusEnProgreso: {
+        fontSize: 14,
+        color: 'orange',
+        marginTop: 10,
+    },
+    statusFinalizado: {
+        fontSize: 14,
+        color: 'red',
+        marginTop: 10,
+    },
+    statusDefault: {
+        fontSize: 14,
+        color: 'black', // Color por defecto
+        marginTop: 10,
+    },
     centeredView: {
         flex: 1,
         justifyContent: 'center',
@@ -476,11 +509,6 @@ const styles = StyleSheet.create({
     },
     time: {
         fontSize: 18,
-        marginTop: 10,
-    },
-    status: {
-        fontSize: 14,
-        color: 'green',
         marginTop: 10,
     },
     review: {

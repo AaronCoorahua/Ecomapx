@@ -20,6 +20,7 @@ export const EventProvider = ({ children }) => {
       });
 
       if (!response.ok) {
+        console.error(`Error HTTP! Estado: ${response.status}`);
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
