@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   TextInput,
@@ -48,6 +49,40 @@ export default function CreateEvent() {
 
   const navigation = useNavigation();
 
+  // Función para restablecer los estados a sus valores iniciales
+  const resetForm = () => {
+    setPuntaje(0);
+    setStatus('Por Empezar');
+    setDescripDetail('');
+    setTag('');
+    setResenas([]);
+    setConfirmados(0);
+    setNombre('');
+    setBanner('');
+    setUbicacion('Lima');
+    setDescripcion('');
+    setCapacidad('');
+    setDuracion('');
+    setFecha('');
+    setHora('');
+    setRegion({
+      latitude: -12.046374,
+      longitude: -77.0427934,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    });
+    setMarker({
+      latitude: -12.046374,
+      longitude: -77.0427934,
+    });
+  };
+
+  // Restablecer el formulario cuando la pantalla gana el foco
+  useFocusEffect(
+    useCallback(() => {
+      resetForm();
+    }, [])
+  );
 
   const handleSubmit = async () => {
     try {
