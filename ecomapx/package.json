@@ -11,7 +11,7 @@
   "dependencies": {
     "@expo/webpack-config": "^19.0.0",
     "@react-native-async-storage/async-storage": "1.18.2",
-    "@react-native-community/datetimepicker": "7.2.0",
+    "@react-native-community/datetimepicker": "^7.2.0",
     "@react-native-picker/picker": "2.4.10",
     "@react-navigation/bottom-tabs": "^6.5.10",
     "@react-navigation/native": "^6.1.9",
@@ -24,6 +24,7 @@
     "expo-linear-gradient": "~12.3.0",
     "expo-location": "^16.3.0",
     "expo-random": "~13.2.0",
+    "expo-splash-screen": "~0.20.5",
     "expo-status-bar": "~1.6.0",
     "firebase": "^10.6.0",
     "moment": "^2.29.4",
@@ -43,8 +44,7 @@
     "react-native-svg": "^13.9.0",
     "react-native-swiper": "^1.6.0",
     "react-native-vector-icons": "^10.0.0",
-    "react-native-web": "~0.19.6",
-    "expo-splash-screen": "~0.20.5"
+    "react-native-web": "~0.19.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

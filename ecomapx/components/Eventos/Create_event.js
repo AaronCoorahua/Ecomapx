@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   TextInput,
+  Text,
   Button,
   StyleSheet,
   Alert,
@@ -17,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
 import { useEvents } from '../Context/EventContext';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 
 export default function CreateEvent() {
@@ -45,6 +47,14 @@ export default function CreateEvent() {
     longitude: -77.0427934,
   });
 
+  //otras cosas:
+  const [mode, setMode] = useState('time');
+  // Inicializa 'date' con una fecha que tenga la hora y minutos en cero
+  const [date, setDate] = useState(new Date(new Date().setHours(0,0,0,0)));
+
+  // Estado para la instancia de Date utilizada por DateTimePicker
+  const [timePickerValue, setTimePickerValue] = useState(new Date());
+
   const { updateEvents } = useEvents(); // Utiliza el hook useEvents para acceder a la función de actualización
 
   const navigation = useNavigation();
@@ -62,9 +72,12 @@ export default function CreateEvent() {
     setUbicacion('Lima');
     setDescripcion('');
     setCapacidad('');
-    setDuracion('');
+    setDate(new Date(new Date().setHours(0,0,0,0))); // Restablecer el reloj a 00:00
+    setDuracion(0); // Restablecer la duración a 0 minutos
     setFecha('');
-    setHora('');
+    const now = new Date();
+    setTimePickerValue(now); // Restablece el selector de hora a la hora actual
+    setHora(formatHour(now)); // Restablece la hora formateada a la hora actual
     setRegion({
       latitude: -12.046374,
       longitude: -77.0427934,
@@ -75,6 +88,32 @@ export default function CreateEvent() {
       latitude: -12.046374,
       longitude: -77.0427934,
     });
+  };
+
+
+  const onChange = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setDate(currentDate);
+    const hours = currentDate.getHours();
+    const minutes = currentDate.getMinutes();
+    setDuracion(hours * 60 + minutes); // Almacena la duración en minutos
+  };
+
+  // Función para manejar los cambios en el selector de hora
+  const onTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || timePickerValue;
+    setTimePickerValue(currentTime); // Actualiza el estado con la nueva instancia de Date
+
+    // Formatea la hora y los minutos a una cadena HH:MM y actualiza el estado de hora
+    const formattedTime = formatHour(currentTime);
+    setHora(formattedTime);
+  };
+
+  // Función para formatear la hora a una cadena HH:MM
+  const formatHour = (time) => {
+    const hours = time.getHours().toString().padStart(2, '0');
+    const minutes = time.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
   };
 
   // Restablecer el formulario cuando la pantalla gana el foco
@@ -149,9 +188,27 @@ export default function CreateEvent() {
             </Picker>
             <TextInput placeholder="Descripción" value={descripcion} onChangeText={setDescripcion} style={styles.input} />
             <TextInput placeholder="Capacidad" value={capacidad} onChangeText={setCapacidad} keyboardType="numeric" style={styles.input} />
-            <TextInput placeholder="Duración" value={duracion} onChangeText={setDuracion} keyboardType="numeric" style={styles.input} />
+            <Text style={styles.label}>Duración:</Text>
+            <DateTimePicker
+                testID="dateTimePicker"
+                value={date}
+                mode="time"
+                is24Hour={true}
+                display="default"
+                onChange={onChange}
+                style={styles.timePicker} // Añade estilos si es necesario
+            />
             <TextInput placeholder="Fecha (DD/MM/YYYY)" value={fecha} onChangeText={setFecha} style={styles.input} />
-            <TextInput placeholder="Hora (HH:MM)" value={hora} onChangeText={setHora} style={styles.input} />
+            <Text style={styles.label}>Hora:</Text>
+            <DateTimePicker
+              testID="timePicker1"
+              value={timePickerValue}
+              mode="time"
+              is24Hour={true}
+              display="default"
+              onChange={onTimeChange}
+              style={styles.timePicker}
+            />
             <MapView
               style={styles.map}
               initialRegion={region}
@@ -174,6 +231,22 @@ export default function CreateEvent() {
 }
 
 const styles = StyleSheet.create({
+  timePicker: {
+    alignSelf:'center',
+  },
+  label: {
+    // Estilos para la etiqueta de la duración
+    fontSize: 16,
+    fontWeight: 500,
+    marginLeft: 10,
+    color: '#222',
+},
+  timeText: {
+    // Estilos para el texto de la hora
+    fontSize: 18,
+    color: 'blue', // o el color que prefieras
+    textDecorationLine: 'underline',
+  },
   container: {
     flex: 1,
   },
