@@ -49,6 +49,7 @@ const StarDisplay = ({ new_average }) => {
     }
 };
 
+
 const Event = ({ route }) => {
     const navigation = useNavigation();
     //const { event } = route.params;
@@ -64,6 +65,36 @@ const Event = ({ route }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [hasUserRated, setHasUserRated] = useState(false);
 
+    // Función para determinar si se debe mostrar el botón de puntuar
+    const shouldShowRateButton = () => {
+        return userRole === 'ecobuscador' && isUserRegistered() && event.status === 'Finalizado';
+    };
+
+    const showLoadingIndicatorOrCheck = () => {
+        // Si se está cargando algo, muestra el indicador de carga, pero solo si el usuario está registrado
+        // o el evento no está en un estado de "Finalizado" o "En Progreso" sin registro del usuario
+        if (isLoading && (isUserRegistered() || !['Finalizado', 'En Progreso'].includes(event.status))) {
+            console.log("Mostrando ActivityIndicator");
+            return <ActivityIndicator size="large" color="#0000ff" />;
+        }
+    
+        // Si el usuario está registrado y el evento está en un estado relevante, muestra el check
+        if (isUserRegistered() && ['En Progreso', 'Finalizado', 'Por Empezar'].includes(event.status)) {
+            console.log("Mostrando Check");
+            return (
+                <View style={styles.checkButton}>
+                    <FontAwesome5 name="check" size={24} color="black" />
+                </View>
+            );
+        }
+    };
+
+    // La función para mostrar el botón de asistir permanece igual
+    const shouldShowAssistButton = () => {
+        // Muestra el botón si el usuario es ecobuscador, no ha confirmado asistencia,
+        // el evento está por empezar, y no se está cargando nada
+        return userRole === 'ecobuscador' && !isUserRegistered() && event.status === 'Por Empezar' && !isLoading;
+    };
 
     useEffect(() => {
         const fetchEventDetails = async () => {
@@ -136,7 +167,10 @@ const Event = ({ route }) => {
         } catch (error) {
             console.error('Error al cargar eventos asistidos:', error);
         } finally {
-            setIsLoading(false);  // Finaliza la carga una vez que se obtienen los datos
+            // Introduce un retraso artificial
+            setTimeout(() => {
+                setIsLoading(false);
+            }, 300); // Retraso de 0.4 segundos
         }
     };
 
@@ -259,17 +293,12 @@ const Event = ({ route }) => {
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.eventHeader}>
                 <Text style={styles.title}>{event.nombre}</Text>
-                {userRole === 'ecobuscador' && (isLoading ? (
-                    <ActivityIndicator size="small" color="#0000ff" />
-                ) : isUserRegistered() ? (
-                    <View style={styles.checkButton}>
-                        <FontAwesome5 name="check" size={24} color="black" />
-                    </View>
-                ) : (
+                {userRole === 'ecobuscador' && showLoadingIndicatorOrCheck()}
+                {userRole === 'ecobuscador' && shouldShowAssistButton() && (
                     <TouchableOpacity onPress={handleAssist} style={styles.assistButton}>
                         <AntDesign name="pluscircle" size={24} color="black" />
                     </TouchableOpacity>
-                ))}
+                )}
             </View>
             <Image source={{ uri: event.banner }} style={styles.image} />
             <Text style={styles.title}>{event.nombre}</Text>
@@ -287,18 +316,16 @@ const Event = ({ route }) => {
             <Text style={getStatusStyle(event.status)}>{event.status}</Text>
             <Text style={styles.review}>Reseñas: {event.resenas}</Text>
             <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
-            {/* Mostrar la puntuación del evento para todos los usuarios */}
             <View style={styles.ratingContainer}>
-                <StarDisplay new_average={starCount} />
-                {/* Solo mostrar la opción de puntuar si el usuario es un ecobuscador */}
-                {userRole === 'ecobuscador' && (
-                <TouchableOpacity style={[styles.rateButton]} onPress={openModalToRate}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14}}>
-                <FontAwesome5 name="star" size={21.6} color="#2268D6" marginRight={5}/>
-                <Text style={{ color: '#2268D6', fontSize:17}}>Puntuar</Text>
-                </View>
-                </TouchableOpacity>
-                )}
+                    <StarDisplay new_average={starCount} />
+                    {shouldShowRateButton() && (
+                        <TouchableOpacity style={[styles.rateButton]} onPress={openModalToRate}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14 }}>
+                                <FontAwesome5 name="star" size={21.6} color="#2268D6" marginRight={5} />
+                                <Text style={{ color: '#2268D6', fontSize:17 }}>Puntuar</Text>
+                            </View>
+                        </TouchableOpacity>
+                    )}
             </View>
             <Modal
                 animationType="slide"
