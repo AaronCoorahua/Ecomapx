@@ -78,7 +78,7 @@ export default function Register({ onSuccessfulRegister }) {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View>
           <View style={styles.logoContainer}>
-            <Image source={require('../../assets/logop.png')} style={styles.logo} />
+            <Image source={require('../../assets/logo2.png')} style={styles.logo} />
           </View>
           <Text>Nombres:</Text>
           <TextInput
