@@ -1,10 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, Button } from 'react-native';
-import MapView from 'react-native-maps';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ActivityIndicator, Button, Text, TouchableOpacity, ScrollView } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 
-export default function Crimes({navigation}) {
+
+const crimeTypes = [
+  "Robo agravado", "Robo agravado a mano armada", "Robo", "Hurto",
+  "Hurto agravado", "Hurto de vehículo", "Asalto y robo de vehículos",
+  "Homicidio calificado - Asesinato", "Homicidio por arma de fuego", "Otros..."
+];
+
+export default function Crimes({ navigation }) {
   const [region, setRegion] = useState(null);
+  const [markers, setMarkers] = useState([]);
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [menuHeight, setMenuHeight] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -13,20 +23,69 @@ export default function Crimes({navigation}) {
         console.log('Permission to access location was denied');
         return;
       }
-
-      let location = await Location.getCurrentPositionAsync({});
-      console.log('Current Location:', location);
+      //let location = await Location.getCurrentPositionAsync({});
+      let location = Location.getCurrentPositionAsync({});
       setRegion({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
+        //latitude: location.coords.latitude,
+        //longitude: location.coords.longitude,
+        latitude: -12.046374,
+        longitude: -77.0427934,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
       });
     })();
   }, []);
 
+  const toggleMenu = () => {
+    setMenuHeight(menuHeight === 0 ? '30%' : 0);
+  };
+
+  const handleOptionToggle = async (crimeType) => {
+    const newSelectedOptions = { ...selectedOptions, [crimeType]: !selectedOptions[crimeType] };
+    setSelectedOptions(newSelectedOptions);
+
+    if (newSelectedOptions[crimeType]) {
+      await fetchCrimeData(crimeType);
+    } else {
+      removeMarkersForCrimeType(crimeType);
+    }
+  };
+
+  const fetchCrimeData = async (crimeType) => {
+    try {
+      const response = await fetch(`http://192.168.3.4:5000/get_crimes?tipo=${encodeURIComponent(crimeType)}`);
+      const data = await response.json();
+      const newMarkers = data.map(crime => ({
+        latitude: parseFloat(crime.coordenadas.latitude),
+        longitude: parseFloat(crime.coordenadas.longitude),
+        type: crimeType
+      }));
+
+      setMarkers(markers => [...markers, ...newMarkers]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const removeMarkersForCrimeType = (crimeType) => {
+    setMarkers(markers => markers.filter(marker => marker.type !== crimeType));
+  };
+
+  const renderMenu = () => (
+    <View style={[styles.menuContainer, { height: menuHeight }]}>
+      <ScrollView style={styles.scrollView}>
+        {crimeTypes.map((crimeType, index) => (
+          <TouchableOpacity key={index} onPress={() => handleOptionToggle(crimeType)}>
+            <Text style={styles.menuText}>
+              {crimeType} {selectedOptions[crimeType] ? "(Seleccionado)" : ""}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+
   if (!region) {
-    console.log('Loading region...');
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" />
@@ -34,7 +93,6 @@ export default function Crimes({navigation}) {
     );
   }
 
-  console.log('Region set, rendering map...');
   return (
     <View style={styles.container}>
       <MapView
@@ -42,13 +100,19 @@ export default function Crimes({navigation}) {
         initialRegion={region}
         showsUserLocation={true}
         followUserLocation={true}
-      />
+      >
+        {markers.map((marker, index) => (
+          <Marker
+            key={index}
+            coordinate={marker}
+          />
+        ))}
+      </MapView>
       <View style={styles.buttonContainer}>
-        <Button 
-          title="DENUNCIAR" 
-          onPress={() => navigation.navigate('RegisterCrime')} 
-        />
+        <Button title="DENUNCIAR" onPress={() => navigation.navigate('RegisterCrime')} />
+        <Button title="FILTROS" onPress={toggleMenu} />
       </View>
+      {renderMenu()}
     </View>
   );
 }
@@ -66,5 +130,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
+  },
+  menuContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  menuText: {
+    fontSize: 18,
+    margin: 10,
   },
 });

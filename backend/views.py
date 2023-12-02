@@ -663,3 +663,23 @@ def add_crime():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+    
+@app.route('/get_crimes', methods=['GET'])
+def get_crimes():
+    try:
+        table = dynamodb.Table('datacrime')
+        tipo = request.args.get('tipo')
+        
+        if not tipo:
+            return jsonify({'error': 'Tipo es un campo obligatorio'}), 400
+
+        response = table.query(
+            IndexName='tipo-index',
+            KeyConditionExpression=Key('tipo').eq(tipo)
+        )
+
+        return jsonify(response['Items']), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
