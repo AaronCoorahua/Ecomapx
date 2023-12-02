@@ -13,7 +13,7 @@ export const EventProvider = ({ children }) => {
   const updateEvents = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      const response = await fetch('http://192.168.0.17:5000/listEvents', {
+      const response = await fetch('http://192.168.3.4:5000/listEvents', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

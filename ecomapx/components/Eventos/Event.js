@@ -55,7 +55,7 @@ const Event = ({ route }) => {
     useEffect(() => {
         const fetchEventDetails = async () => {
             try {
-                const response = await fetch(`http://192.168.0.17:5000/event_details/${event.id}`, {
+                const response = await fetch(`http://192.168.3.4:5000/event_details/${event.id}`, {
                     headers: {
                         // Configuración de headers...
                     }
@@ -106,7 +106,7 @@ const Event = ({ route }) => {
     const fetchUserAssistedEvents = async (token) => {
         try {
             if (token) {
-                const response = await fetch('http://192.168.0.17:5000/get_user_assisted_events', {
+                const response = await fetch('http://192.168.3.4:5000/get_user_assisted_events', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
