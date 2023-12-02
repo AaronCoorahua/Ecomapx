@@ -300,26 +300,53 @@ def assist_event():
         return jsonify({'error': 'Event ID is required'}), 400
 
     try:
+        # Actualiza la lista de eventos asistidos del usuario
         ecobuscadores_table = dynamodb.Table('ecobuscadores')
-        response = ecobuscadores_table.update_item(
+        ecobuscadores_table.update_item(
             Key={'id': current_user_id},
             UpdateExpression="SET assisted_events = list_append(if_not_exists(assisted_events, :emptyList), :event_id)",
             ExpressionAttributeValues={
-                ':event_id': [event_id],  # Aquí cambias para agregar solo el ID
+                ':event_id': [event_id],
                 ':emptyList': []
-            },
+            }
+        )
+
+        # Incrementa el contador de confirmados en el evento
+        eventos_table = dynamodb.Table('eventos')
+        response = eventos_table.update_item(
+            Key={'id': event_id},
+            UpdateExpression="ADD confirmados :incr",
+            ExpressionAttributeValues={':incr': 1},
             ReturnValues="UPDATED_NEW"
         )
 
         if response['ResponseMetadata']['HTTPStatusCode'] != 200:
-            return jsonify({'error': 'Failed to update ecobuscadores table'}), 500
+            return jsonify({'error': 'Failed to update eventos table'}), 500
 
         return jsonify({'message': 'Event assisted successfully'}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-    
+
+@app.route('/event_confirm_count/<string:event_id>', methods=['GET'])
+def get_confirm_count(event_id):
+    try:
+        table = dynamodb.Table('eventos')
+        response = table.get_item(Key={'id': event_id})
+
+        if 'Item' not in response:
+            return jsonify({'error': 'Evento no encontrado'}), 404
+
+        event = response['Item']
+        confirm_count = event.get('confirmados', 0)
+
+        return jsonify({'confirmados': confirm_count}), 200
+
+    except Exception as e:
+        print(e.response['Error']['Message'])
+        return jsonify({'error': 'Error al obtener datos del evento'}), 500
+
 
 @app.route('/create_event', methods=['POST'])
 @jwt_required()

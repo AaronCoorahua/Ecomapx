@@ -181,14 +181,17 @@ const Event = ({ route }) => {
         // Comprobar si el ID del evento está en la lista de eventos asistidos
         return userAssistedEvents.some(eventItem => eventItem === event.id);
     };
+
     const handleAssist = async () => {
-        console.log('Asistencia')
+        console.log('Asistencia');
         try {
             const token = await AsyncStorage.getItem('userToken');
             if (!token) {
                 Alert.alert('Error', 'No se encontró el token de autenticación.');
                 return;
             }
+    
+            // Llamada al endpoint para registrar asistencia
             const response = await fetch('http://192.168.0.17:5000/assist_event', {
                 method: 'POST',
                 headers: {
@@ -199,17 +202,35 @@ const Event = ({ route }) => {
                     event_id: event.id,
                 }),
             });
+    
             if (response.ok) {
                 Alert.alert('Éxito', 'Asistencia registrada correctamente');
                 console.log('Asistencia registrada correctamente al evento:', event.id);
-            
+                
                 // Actualiza el estado y luego actualiza AsyncStorage
                 setUserAssistedEvents(prevEvents => {
-                    const updatedEvents = [...prevEvents, event.id]; // Asegúrate de que sea solo el ID si así lo manejas
-                     console.log("Eventos a que el usuario va asistir (updatedEvents): ", updatedEvents);
+                    const updatedEvents = [...prevEvents, event.id];
+                    console.log("Eventos a que el usuario va asistir (updatedEvents): ", updatedEvents);
                     AsyncStorage.setItem('assistedEvents', JSON.stringify(updatedEvents));
                     return updatedEvents;
                 });
+    
+                // Llamada adicional para actualizar el número de confirmados
+                const confirmResponse = await fetch(`http://192.168.0.17:5000/event_confirm_count/${event.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+    
+                if (confirmResponse.ok) {
+                    const confirmData = await confirmResponse.json();
+                    setEvent(prevEvent => ({
+                        ...prevEvent,
+                        confirmados: confirmData.confirmados
+                    }));
+                } else {
+                    console.error('Error al obtener el número actualizado de confirmados');
+                }
             } else {
                 Alert.alert('Error', 'Error al registrar la asistencia');
             }
@@ -218,6 +239,8 @@ const Event = ({ route }) => {
             Alert.alert('Error', error.toString());
         }
     };
+    
+
     // Función para manejar la selección de estrellas en el modal
     const onStarRatingPress = (newRating) => {
         setTempStarCount(newRating); // Esto actualizará el valor temporal mientras el usuario selecciona las estrellas
@@ -314,7 +337,9 @@ const Event = ({ route }) => {
             <Text style={styles.date}>{event.fecha}</Text>
             <Text style={styles.time}>{event.hora}</Text>
             <Text style={getStatusStyle(event.status)}>{event.status}</Text>
-            <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
+            {userRole === 'ecoorganizador' && (
+                <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
+            )}
             <View style={styles.ratingContainer}>
                     <StarDisplay new_average={starCount} />
                     {shouldShowRateButton() && (
