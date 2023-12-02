@@ -11,9 +11,13 @@ from boto3.dynamodb.conditions import Attr
 from boto3.dynamodb.types import DYNAMODB_CONTEXT
 import re
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+from pytz import timezone
 
 # Establecer el contexto para obtener 1 dígito de precisión decimal
 getcontext().prec = 2
+# Suponiendo que tus eventos están en UTC-5
+local_tz = timezone('Etc/GMT+5')
 
 def sanitize_text(text, max_length=500):
     # 1. Escape de caracteres especiales
@@ -563,14 +567,33 @@ def get_events_details():
 def list_events():
     try:
         table = dynamodb.Table('eventos')
-        # Escaneamos la tabla para obtener todos los eventos
         response = table.scan()
+
         if 'Items' not in response:
             return jsonify({'error': 'Failed to fetch events'}), 500
 
         events = response['Items']
 
-        # Devolvemos la lista de eventos
+        for event in events:
+            try:
+                event_date_str = event['fecha'] + ' ' + event['hora']
+                event_date = datetime.strptime(event_date_str, '%d/%m/%Y %H:%M')
+                event_date = local_tz.localize(event_date)
+
+                duracion = int(Decimal(event['duracion']))
+                event_end = event_date + timedelta(minutes=duracion)
+
+                current_time = datetime.utcnow().replace(tzinfo=timezone('UTC')).astimezone(local_tz)
+
+                if current_time > event_end:
+                    event['status'] = 'Finalizado'
+                elif event_date <= current_time <= event_end:
+                    event['status'] = 'En Progreso'
+                else:
+                    event['status'] = 'Por Empezar'
+            except Exception as e:
+                print(f"Error al procesar el evento {event['id']}: {str(e)}")
+
         return jsonify(events), 200
 
     except Exception as e:

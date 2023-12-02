@@ -10,6 +10,19 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useEvents } from '../Context/EventContext';
 
+const getStatusStyle = (status) => {
+    switch (status) {
+        case 'Por Empezar':
+            return styles.statusPorEmpezar;
+        case 'En Progreso':
+            return styles.statusEnProgreso;
+        case 'Finalizado':
+            return styles.statusFinalizado;
+        default:
+            return styles.statusDefault;
+    }
+};
+
 const Posts = () => {
     const { events, updateEvents } = useEvents();
     const navigation = useNavigation();
@@ -33,7 +46,7 @@ const Posts = () => {
                     <Text style={styles.tag}>{item.tag}</Text>
                     <Text style={styles.date}>{item.fecha}</Text>
                     <Text style={styles.time}>{item.hora}</Text>
-                    <Text style={styles.status}>{item.status}</Text>
+                    <Text style={getStatusStyle(item.status)}>{item.status}</Text>
                     <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Event', { event: item })}>
                         <Text style={styles.buttonText}>Ver más</Text>
                     </TouchableOpacity>
@@ -80,9 +93,21 @@ const styles = StyleSheet.create({
     time: {
         fontSize: 16,
     },
-    status: {
+    statusPorEmpezar: {
         fontSize: 14,
         color: 'green',
+    },
+    statusEnProgreso: {
+        fontSize: 14,
+        color: 'orange',
+    },
+    statusFinalizado: {
+        fontSize: 14,
+        color: 'red',
+    },
+    statusDefault: {
+        fontSize: 14,
+        color: 'black', // Color por defecto
     },
     button: {
         padding: 10,
