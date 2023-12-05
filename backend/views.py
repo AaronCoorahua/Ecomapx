@@ -12,6 +12,7 @@ from boto3.dynamodb.types import DYNAMODB_CONTEXT
 import re
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+import pytz
 from pytz import timezone
 
 # Establecer el contexto para obtener 1 dígito de precisión decimal
@@ -376,9 +377,12 @@ def create_event():
 
         table = dynamodb.Table('eventos')
         event_id = str(uuid.uuid4())
+        fecha_creacion = datetime.now(pytz.timezone('America/Lima'))
+        fecha_creacion_str = fecha_creacion.strftime('%d/%m/%Y %H:%M:%S')
 
         data = {
             'id': event_id,
+            'fecha_creacion': fecha_creacion_str,
             'id_organizador': current_user_id,
             'nombre': nombre,
             'banner': banner,
@@ -422,8 +426,9 @@ def create_event():
         return jsonify({'message': 'Event created successfully', 'event_id': event_id}), 201
 
     except Exception as e:
+        # Es bueno imprimir la excepción para depurar mejor
+        print("Error al procesar el evento:", e)
         return jsonify({'error': str(e)}), 500
-
 
 #METODO PARA ACTUALIZAR LAS ESTRELLAS EN LOS EVENTOS:
 @app.route('/rate_event', methods=['POST'])
@@ -643,6 +648,7 @@ def get_event_details(event_id):
         return jsonify(event), 200
 
     except Exception as e:
+        print("Error al obtener detalles del evento:", e)
         return jsonify({'error': str(e)}), 500
 
 
