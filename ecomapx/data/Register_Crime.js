@@ -10,14 +10,16 @@ import {
   Keyboard,
   ScrollView,
   Platform,
+  Text,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
+import { Switch } from 'react-native';
 
 export default function RegisterCrime() {
-  const [userId, setUserId] = useState(''); // Este valor se debería obtener del contexto de autenticación o almacenamiento local
+  const [userId, setUserId] = useState(''); 
   const [crimeType, setCrimeType] = useState('');
   const [details, setDetails] = useState('');
   const [region, setRegion] = useState({
@@ -32,26 +34,26 @@ export default function RegisterCrime() {
   });
   const navigation = useNavigation();
 
+  const [isAnonymous, setIsAnonymous] = useState(false);
+
   const handleRegisterCrime = async () => {
-    // Obtener el ID del usuario autenticado del almacenamiento local o del contexto de autenticación
-    const authenticatedUserId = await AsyncStorage.getItem('userId'); // Asegúrate de que esta clave sea la correcta
-    // No necesitas llamar a setUserId aquí, ya que sólo lo usarás para la petición POST
-  
+    const authenticatedUserId = await AsyncStorage.getItem('userId');
+
     if (!crimeType || !details) {
       Alert.alert('Error', 'Por favor, selecciona un tipo de crimen e ingresa los detalles.');
       return;
     }
-  
+
     // Asegúrate de que las coordenadas sean un objeto con las propiedades latitude y longitude
     const formattedCoordinates = {
       latitude: marker.latitude,
       longitude: marker.longitude,
     };
-  
+
     try {
       const token = await AsyncStorage.getItem('userToken');
       const crimeData = {
-        user_id: authenticatedUserId, // Este campo no es necesario enviarlo si en el backend se obtiene del token JWT
+        user_id: isAnonymous ? "anonymous" : authenticatedUserId,
         coordenadas: {
           latitude: marker.latitude.toString(),
           longitude: marker.longitude.toString(),
@@ -59,8 +61,8 @@ export default function RegisterCrime() {
         tipo: crimeType,
         detalles: details,
       };
-  
-      const response = await fetch('http://192.168.0.17:5000/add_crime', {
+
+      const response = await fetch('http://192.168.3.4:5000/add_crime', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,16 +70,16 @@ export default function RegisterCrime() {
         },
         body: JSON.stringify(crimeData),
       });
-  
+
       const data = await response.json(); // Primero obtén la respuesta JSON
-  
+
       if (!response.ok) {
         // En lugar de lanzar un error, maneja la respuesta de error adecuadamente
         console.error('Error al registrar el crimen:', data);
         Alert.alert('Error al registrar el crimen', data.error || 'Ocurrió un error desconocido');
         return;
       }
-  
+
       Alert.alert('Éxito', 'Crimen registrado exitosamente');
       navigation.goBack(); // Regresar a la pantalla anterior
     } catch (error) {
@@ -115,6 +117,13 @@ export default function RegisterCrime() {
               style={styles.input}
               multiline
             />
+            <View style={styles.switchContainer}>
+              <Text>Registrar de forma Anonima</Text>
+              <Switch
+                value={isAnonymous}
+                onValueChange={setIsAnonymous}
+              />
+            </View>
             <MapView
               style={styles.map}
               initialRegion={region}
@@ -164,5 +173,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     marginVertical: 20,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 10,
+    marginVertical: 10,
   },
 });

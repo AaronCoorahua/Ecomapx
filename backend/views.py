@@ -686,8 +686,9 @@ def add_review():
 def add_crime():
     try:
 
-        user_id = get_jwt_identity()
+        user_id_from_jwt = get_jwt_identity()
         data = request.json
+        user_id = data.get('user_id') if data.get('user_id') == 'anonymous' else user_id_from_jwt
         crime_id = str(uuid.uuid4())
         coordenadas = data.get('coordenadas', {})
         coordenadas['latitude'] = Decimal(coordenadas['latitude'])
