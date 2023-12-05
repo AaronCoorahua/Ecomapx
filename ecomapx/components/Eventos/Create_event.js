@@ -183,8 +183,49 @@ export default function CreateEvent() {
             <TextInput placeholder="Nombre" value={nombre} onChangeText={setNombre} style={styles.input} />
             <TextInput placeholder="Banner" value={banner} onChangeText={setBanner} style={styles.input} />
             <Picker selectedValue={ubicacion} onValueChange={setUbicacion} style={styles.picker}>
-              <Picker.Item label="Lima" value="Lima" />
-              <Picker.Item label="Callao" value="Callao" />
+              <Picker.Item label="Ancón" value="Ancón" />
+              <Picker.Item label="Ate" value="Ate" />
+              <Picker.Item label="Barranco" value="Barranco" />
+              <Picker.Item label="Breña" value="Breña" />
+              <Picker.Item label="Carabayllo" value="Carabayllo" />
+              <Picker.Item label="Chaclacayo" value="Chaclacayo" />
+              <Picker.Item label="Chorrillos" value="Chorrillos" />
+              <Picker.Item label="Cieneguilla" value="Cieneguilla" />
+              <Picker.Item label="Comas" value="Comas" />
+              <Picker.Item label="El Agustino" value="El Agustino" />
+              <Picker.Item label="Independencia" value="Independencia" />
+              <Picker.Item label="Jesús María" value="Jesús María" />
+              <Picker.Item label="La Molina" value="La Molina" />
+              <Picker.Item label="La Victoria" value="La Victoria" />
+              <Picker.Item label="Cercado de Lima" value="Cercado de Lima" />
+              <Picker.Item label="Lince" value="Lince" />
+              <Picker.Item label="Los Olivos" value="Los Olivos" />
+              <Picker.Item label="Lurigancho" value="Lurigancho" />
+              <Picker.Item label="Lurín" value="Lurín" />
+              <Picker.Item label="Magdalena del Mar" value="Magdalena del Mar" />
+              <Picker.Item label="Miraflores" value="Miraflores" />
+              <Picker.Item label="Pachacámac" value="Pachacámac" />
+              <Picker.Item label="Pucusuna" value="Pucusuna" />
+              <Picker.Item label="Pueblo Libre" value="Pueblo Libre" />
+              <Picker.Item label="Puente Piedra" value="Puente Piedra" />
+              <Picker.Item label="Punta Hermosa" value="Punta Hermosa" />
+              <Picker.Item label="Punta Negra" value="Punta Negra" />
+              <Picker.Item label="Rímac" value="Rímac" />
+              <Picker.Item label="San Bartolo" value="San Bartolo" />
+              <Picker.Item label="San Borja" value="San Borja" />
+              <Picker.Item label="San Isidro" value="San Isidro" />
+              <Picker.Item label="San Juan de Lurigancho" value="San Juan de Lurigancho" />
+              <Picker.Item label="San Juan de Miraflores" value="San Juan de Miraflores" />
+              <Picker.Item label="San Luis" value="San Luis" />
+              <Picker.Item label="San Martín de Porres" value="San Martín de Porres" />
+              <Picker.Item label="San Miguel" value="San Miguel" />
+              <Picker.Item label="Santa Anita" value="Santa Anita" />
+              <Picker.Item label="Santa María del Mar" value="Santa María del Mar" />
+              <Picker.Item label="Santa Rosa" value="Santa Rosa" />
+              <Picker.Item label="Santiago de Surco" value="Santiago de Surco" />
+              <Picker.Item label="Surquillo" value="Surquillo" />
+              <Picker.Item label="Villa El Salvador" value="Villa El Salvador" />
+              <Picker.Item label="Villa María del Triunfo" value="Villa María del Triunfo" />
             </Picker>
             <TextInput placeholder="Descripción" value={descripcion} onChangeText={setDescripcion} style={styles.input} />
             <TextInput placeholder="Capacidad" value={capacidad} onChangeText={setCapacidad} keyboardType="numeric" style={styles.input} />

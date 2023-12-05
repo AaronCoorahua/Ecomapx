@@ -9,7 +9,8 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {Rating, AirbnbRating } from 'react-native-ratings';
 import {FontAwesome} from '@expo/vector-icons';
-
+// Importando el Logo de Google Maps:
+import gmaps from '../../assets/logo-gmaps.png'; 
 
 const getSecurityIconColor = (securityLevel) => {
     if (securityLevel <= 3) {
@@ -94,6 +95,14 @@ const Event = ({ route }) => {
         // Muestra el botón si el usuario es ecobuscador, no ha confirmado asistencia,
         // el evento está por empezar, y no se está cargando nada
         return userRole === 'ecobuscador' && !isUserRegistered() && event.status === 'Por Empezar' && !isLoading;
+    };
+
+    const handleNavigateToCrimeData = () => {
+        navigation.navigate('Crimes', {
+            latitude: event.coordenadas.latitude,
+            longitude: event.coordenadas.longitude,
+            eventName: event.nombre 
+        });
     };
 
     useEffect(() => {
@@ -403,6 +412,11 @@ const Event = ({ route }) => {
             />
             </MapView>
             <Ionicons name="alert-circle" size={30} color={securityIconColor} style={styles.securityIcon} />
+            {userRole === 'ecobuscador' && (
+                <TouchableOpacity onPress={handleNavigateToCrimeData}>
+                    <Image source={gmaps} style={styles.gmapslogo} />
+                </TouchableOpacity>
+            )}
             <View style={styles.nuevo}>
             <Button title="Go to UserProfile" onPress={() => navigation.navigate('Profile')} />
             </View>
@@ -412,6 +426,12 @@ const Event = ({ route }) => {
 }
 
 const styles = StyleSheet.create({
+    gmapslogo:{
+        width:30,
+        height:30,
+        marginTop:-195,
+        marginLeft:300,
+    },
     statusPorEmpezar: {
         fontSize: 14,
         color: 'green',
@@ -580,7 +600,7 @@ const styles = StyleSheet.create({
     },
     securityIcon: {
         position: 'absolute',
-        top: 800,
+        top: 776,
         left: 25,
         zIndex: 1,
     },

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, Button, Text, TouchableOpacity, ScrollView } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
-
+import FontistoIcon from 'react-native-vector-icons/Fontisto';
 
 const crimeTypes = [
   "Robo agravado", "Robo agravado a mano armada", "Robo", "Hurto",
@@ -10,31 +10,51 @@ const crimeTypes = [
   "Homicidio calificado - Asesinato", "Homicidio por arma de fuego", "Otros..."
 ];
 
-export default function Crimes({ navigation }) {
+export default function Crimes({ route, navigation }) {
   const [region, setRegion] = useState(null);
   const [markers, setMarkers] = useState([]);
   const [selectedOptions, setSelectedOptions] = useState({});
   const [menuHeight, setMenuHeight] = useState(0);
+  // Estado para almacenar las coordenadas del evento
+  const [eventLocation, setEventLocation] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.log('Permission to access location was denied');
-        return;
-      }
-      //let location = await Location.getCurrentPositionAsync({});
-      let location = Location.getCurrentPositionAsync({});
-      setRegion({
-        //latitude: location.coords.latitude,
-        //longitude: location.coords.longitude,
-        latitude: -12.046374,
-        longitude: -77.0427934,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      });
-    })();
+    // Este useEffect maneja los permisos y establece una ubicación por defecto
+    useEffect(() => {
+      (async () => {
+          let { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+              console.log('Permission to access location was denied');
+              return;
+          }
+
+          // Si no hay coordenadas específicas en route.params, establece una ubicación por defecto
+          if (!route.params) {
+              let location = await Location.getCurrentPositionAsync({});
+              setRegion({
+                  latitude: location.coords.latitude,
+                  longitude: location.coords.longitude,
+                  latitudeDelta: 0.0922,
+                  longitudeDelta: 0.0421,
+              });
+          }
+      })();
   }, []);
+
+    // Este useEffect se ejecuta cuando hay cambios en route.params
+    useEffect(() => {
+      if (route.params) {
+          const { latitude, longitude, eventName } = route.params;
+          setRegion({
+              latitude,
+              longitude,
+              latitudeDelta: 0.008,
+              longitudeDelta: 0.008,
+          });
+
+          // Almacenar la ubicación del evento
+          setEventLocation({ latitude, longitude, title: eventName });
+      }
+  }, [route.params]);
 
   const toggleMenu = () => {
     setMenuHeight(menuHeight === 0 ? '30%' : 0);
@@ -53,7 +73,7 @@ export default function Crimes({ navigation }) {
 
   const fetchCrimeData = async (crimeType) => {
     try {
-      const response = await fetch(`http://192.168.3.4:5000/get_crimes?tipo=${encodeURIComponent(crimeType)}`);
+      const response = await fetch(`http://192.168.0.17:5000/get_crimes?tipo=${encodeURIComponent(crimeType)}`);
       const data = await response.json();
       const newMarkers = data.map(crime => ({
         latitude: parseFloat(crime.coordenadas.latitude),
@@ -107,6 +127,13 @@ export default function Crimes({ navigation }) {
             coordinate={marker}
           />
         ))}
+        {eventLocation && (
+            <Marker 
+                coordinate={{ latitude: eventLocation.latitude, longitude: eventLocation.longitude }} 
+                title={eventLocation.title || "Ubicación del Evento"}>
+                <FontistoIcon name="map-marker-alt" size={26} color="#2C9840" style={styles.iconStyle} /> 
+            </Marker>
+        )}
       </MapView>
       <View style={styles.buttonContainer}>
         <Button title="DENUNCIAR" onPress={() => navigation.navigate('RegisterCrime')} />
