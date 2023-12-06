@@ -187,6 +187,10 @@ export default function UserProfile() {
     const [eventos, setEventos] = useState([]);
     const navigation = useNavigation();
 
+    const handleEventPress = (event) => {
+      navigation.navigate('Event', { event });
+    };
+
       // Función para recuperar el perfil del usuario
       const fetchUserProfile = async () => {
         try {
@@ -381,16 +385,16 @@ export default function UserProfile() {
         <View style={styles.misEventosContainer}>
           <Text style={styles.misEventosTitle}>Mis Eventos:</Text>
           <FlatList
-            data={eventos}
-            horizontal={true} // Deslizamiento horizontal
-            showsHorizontalScrollIndicator={false} // Ocultar la barra de desplazamiento
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.eventoContainer}>
-                <Image source={{ uri: item.banner }} style={styles.eventoImage} />
-                <Text style={styles.eventoNombre}>{item.nombre}</Text>
-              </View>
-            )}
+              data={eventos}
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                  <TouchableOpacity onPress={() => handleEventPress(item)} style={styles.eventoContainer}>
+                      <Image source={{ uri: item.banner }} style={styles.eventoImage} />
+                      <Text style={styles.eventoNombre}>{item.nombre}</Text>
+                  </TouchableOpacity>
+              )}
           />
         </View>
 
