@@ -606,7 +606,16 @@ def list_events():
 
         events = response['Items']
 
+        # Convertir la fecha de creación a objeto datetime y ordenar
         for event in events:
+            event['fecha_creacion_datetime'] = datetime.strptime(event['fecha_creacion'], '%d/%m/%Y %H:%M:%S')
+        events.sort(key=lambda x: x['fecha_creacion_datetime'], reverse=True)
+
+        # Eliminar la clave 'fecha_creacion_datetime'
+        for event in events:
+            del event['fecha_creacion_datetime']
+
+            # Aquí se procesa la lógica de estado de cada evento basada en la fecha y hora actual
             try:
                 event_date_str = event['fecha'] + ' ' + event['hora']
                 event_date = datetime.strptime(event_date_str, '%d/%m/%Y %H:%M')
@@ -629,7 +638,9 @@ def list_events():
         return jsonify(events), 200
 
     except Exception as e:
+        print(f"Error al listar eventos: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    
 
 #PARA RECUPERAR LA INFO DEL EVENTO SELECCIONADO EN VER MAS EN LOS POSTS:
 @app.route('/event_details/<event_id>', methods=['GET'])
