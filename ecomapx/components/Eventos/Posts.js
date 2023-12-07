@@ -41,9 +41,7 @@ const Posts = () => {
                 <View style={styles.card}>
                     <Image source={{ uri: item.banner }} style={styles.image} />
                     <Text style={styles.name}>{item.nombre}</Text>
-                    <Text style={styles.userId}>Creado por: {item.user_id}</Text>
                     <Text style={styles.location}>{item.ubicacion}</Text>
-                    <Text style={styles.tag}>{item.tag}</Text>
                     <Text style={styles.date}>{item.fecha}</Text>
                     <Text style={styles.time}>{item.hora}</Text>
                     <Text style={getStatusStyle(item.status)}>{item.status}</Text>

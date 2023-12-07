@@ -662,6 +662,30 @@ def get_event_details(event_id):
         print("Error al obtener detalles del evento:", e)
         return jsonify({'error': str(e)}), 500
 
+#PARA RECUPERAR LA INFO DEL ECOORGANIZADOR QUE HA CREADO ESE EVENTO EN LA VISTA DE EVENT.JS:
+@app.route('/get_organizer_details/<organizer_id>', methods=['GET'])
+def get_organizer_details(organizer_id):
+    try:
+        print("Organizer ID recibido:", organizer_id)
+        table = dynamodb.Table('ecoorganizadores')
+
+        response = table.get_item(
+            Key={'id': organizer_id}
+        )
+
+        item = response.get('Item')
+        if not item:
+            print("Organizador no encontrado en la base de datos")
+            return jsonify({'error': 'Organizador no encontrado'}), 404
+
+        print("Organizador encontrado")
+        # Retorna solo el nombre y apellido del organizador
+        return jsonify({'nombres': item.get('nombres'), 'apellidos': item.get('apellidos')}), 200
+
+    except Exception as e:
+        print("Excepción capturada:", e)
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/add_review', methods=['POST'])
 @jwt_required()

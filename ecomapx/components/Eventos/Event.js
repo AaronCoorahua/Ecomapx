@@ -65,6 +65,7 @@ const Event = ({ route }) => {
     const [userAssistedEvents, setUserAssistedEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hasUserRated, setHasUserRated] = useState(false);
+    const [organizerName, setOrganizerName] = useState('');
 
     // Función para determinar si se debe mostrar el botón de puntuar
     const shouldShowRateButton = () => {
@@ -105,39 +106,63 @@ const Event = ({ route }) => {
         });
     };
 
-    useEffect(() => {
-        const fetchEventDetails = async () => {
-            try {
-                const response = await fetch(`http://192.168.0.17:5000/event_details/${event.id}`, {
-                    headers: {
-                        // Configuración de headers...
-                    }
-                });
+    const fetchOrganizerDetails = async () => {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            const response = await fetch(`http://192.168.0.17:5000/get_organizer_details/${event.id_organizador}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
     
-                if (response.ok) {
-                    const updatedEvent = await response.json();
-                    setStarCount(parseFloat(updatedEvent.puntaje)); // Actualizar con el promedio actualizado
-                    setTempStarCount(parseFloat(updatedEvent.puntaje)); // También actualiza la puntuación temporal
-    
-                    // Comprueba si el usuario ya ha calificado el evento
-                    const userId = await AsyncStorage.getItem('userId');
-                    if (updatedEvent.ratings2 && updatedEvent.ratings2[userId]) {
-                        setHasUserRated(true);
-                    } else {
-                        setHasUserRated(false);
-                    }
-    
-                } else {
-                    console.error('Error al obtener detalles del evento');
-                }
-            } catch (error) {
-                console.error('Error al conectar con el backend', error);
+            if (response.ok) {
+                const organizerData = await response.json();
+                setOrganizerName(`${organizerData.nombres} ${organizerData.apellidos}`);
+            } else {
+                console.error('Error al obtener detalles del organizador:', response.status);
             }
-        };
+        } catch (error) {
+            console.error('Error al conectar con el backend para obtener detalles del organizador', error);
+        }
+    };
     
+
+    const fetchEventDetails = async () => {
+        try {
+            const response = await fetch(`http://192.168.0.17:5000/event_details/${event.id}`, {
+                headers: {
+                    // Configuración de headers...
+                }
+            });
+
+            if (response.ok) {
+                const updatedEvent = await response.json();
+                setStarCount(parseFloat(updatedEvent.puntaje)); // Actualizar con el promedio actualizado
+                setTempStarCount(parseFloat(updatedEvent.puntaje)); // También actualiza la puntuación temporal
+
+                // Comprueba si el usuario ya ha calificado el evento
+                const userId = await AsyncStorage.getItem('userId');
+                if (updatedEvent.ratings2 && updatedEvent.ratings2[userId]) {
+                    setHasUserRated(true);
+                } else {
+                    setHasUserRated(false);
+                }
+
+            } else {
+                console.error('Error al obtener detalles del evento');
+            }
+        } catch (error) {
+            console.error('Error al conectar con el backend', error);
+        }
+    };
+
+    useEffect(() => {
+        // Llama a ambas funciones en el mismo useEffect
+        fetchOrganizerDetails();
         fetchEventDetails();
-    }, [event.id]);
-    
+    }, [event.id, event.id_organizador]); // Dependencias actualizadas
+
 
     useEffect(() => {
         const loadUserRoleandEvents = async () => {
@@ -334,7 +359,7 @@ const Event = ({ route }) => {
             </View>
             <Image source={{ uri: event.banner }} style={styles.image} />
             <Text style={styles.title}>{event.nombre}</Text>
-            <Text style={styles.userId}>Creado por: {event.id_organizador}</Text>
+            <Text style={styles.userId}>Creado por: {organizerName}</Text>
             <Text style={styles.location}>{event.ubicacion}</Text>
             <View style={styles.description}>
             <Text >{event.descripcion}</Text>
