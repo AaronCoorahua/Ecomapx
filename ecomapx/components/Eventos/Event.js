@@ -66,6 +66,7 @@ const Event = ({ route }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [hasUserRated, setHasUserRated] = useState(false);
     const [organizerName, setOrganizerName] = useState('');
+    const [following, setFollowing] = useState(false);
 
     // Función para determinar si se debe mostrar el botón de puntuar
     const shouldShowRateButton = () => {
@@ -105,6 +106,14 @@ const Event = ({ route }) => {
             eventName: event.nombre 
         });
     };
+
+    const toggleFollowing = () => {
+        setFollowing(!following);
+    };
+
+    const buttonStyle = following ? styles.buttonSiguiendo : styles.buttonSeguir;
+    const buttonText = following ? 'Siguiendo' : 'Seguir';
+    const textStyle = following ? styles.buttonTextSiguiendo : styles.buttonTextSeguir;
 
     const fetchOrganizerDetails = async () => {
         try {
@@ -359,7 +368,21 @@ const Event = ({ route }) => {
             </View>
             <Image source={{ uri: event.banner }} style={styles.image} />
             <Text style={styles.title}>{event.nombre}</Text>
-            <Text style={styles.userId}>Creado por: {organizerName}</Text>
+            <View style={styles.creadopor}>
+            <Text style={styles.userId}>Creado por</Text>
+            <Text style={styles.dospuntos}>:</Text>
+            </View>
+            <View style={styles.userInfoContainer}>
+            <Text style={styles.userId2}>{organizerName}</Text>
+            {userRole === 'ecobuscador' && (
+                <TouchableOpacity
+                style={[buttonStyle]}
+                onPress={toggleFollowing}
+                >
+                <Text style={textStyle}>{buttonText}</Text>
+                </TouchableOpacity>
+            )}
+            </View>
             <Text style={styles.location}>{event.ubicacion}</Text>
             <View style={styles.description}>
             <Text >{event.descripcion}</Text>
@@ -567,10 +590,53 @@ const styles = StyleSheet.create({
         height: 300,
         marginBottom: 10,
     },
+    userInfoContainer: {
+        flexDirection: 'row', // Alinea los elementos en una fila horizontal
+        alignItems: 'center', // Centra verticalmente los elementos
+        marginTop: -8,
+    },
     userId: {
         fontSize: 14,
         color: 'grey',
         marginTop: -3,
+        marginRight: 3,
+    },
+    dospuntos:{
+        fontSize: 14,
+        color: 'grey',
+        marginTop: -3,
+    },
+    creadopor:{
+        flexDirection: 'row', // Alinea los elementos en una fila horizontal
+    },
+    userId2: {
+        marginTop: 8,
+        fontSize: 14,
+        color: 'grey',
+        marginRight: 12, // Agrega margen entre los elementos
+    },
+    buttonSeguir: {
+        backgroundColor: '#3498db',
+        padding: 9,
+        borderRadius: 8,
+        marginTop: 10,
+    },
+    buttonSiguiendo: {
+        borderColor:'#3498db',
+        borderWidth: 2.5,
+        padding: 7.5,
+        borderRadius: 8,
+        marginTop: 10,
+    },
+    buttonTextSeguir: {
+        color: 'white',
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    buttonTextSiguiendo: {
+        color: '#3498db',
+        fontWeight: 'bold',
+        textAlign: 'center',
     },
     title: {
         fontSize: 24,
@@ -579,7 +645,7 @@ const styles = StyleSheet.create({
     },
     location: {
         fontSize: 18,
-        marginTop: 8,
+        marginTop: 3,
     },
     description: {
         fontSize: 16,
