@@ -9,6 +9,7 @@ export const useEvents = () => useContext(EventContext);
 
 export const EventProvider = ({ children }) => {
   const [events, setEvents] = useState([]);
+  const [followedEvents, setFollowedEvents] = useState([]);
 
   const updateEvents = async () => {
     try {
@@ -31,8 +32,34 @@ export const EventProvider = ({ children }) => {
     }
   };
 
+  const updateFollowedEvents = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      const userId = await AsyncStorage.getItem('userId');
+
+      const response = await fetch('http://192.168.0.17:5000/listFollowedEvents', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: userId })
+      });
+
+      if (!response.ok) {
+        console.error(`Error HTTP! Estado: ${response.status}`);
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setFollowedEvents(data); // Actualiza el estado de los eventos seguidos
+    } catch (error) {
+      console.error("Error fetching followed events:", error);
+    }
+  };
+
   return (
-    <EventContext.Provider value={{ events, updateEvents }}>
+    <EventContext.Provider value={{ events, updateEvents, followedEvents, updateFollowedEvents }}>
       {children}
     </EventContext.Provider>
   );

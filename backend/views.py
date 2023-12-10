@@ -755,6 +755,43 @@ def update_following(user_id):
     return jsonify({'message': 'Lista de seguimiento actualizada'}), 200
 
 
+@app.route('/listFollowedEvents', methods=['POST'])
+def list_followed_events():
+    data = request.get_json()
+    user_id = data['userId']
+
+    # Obtener la lista de ecoorganizadores seguidos por el usuario
+    ecobuscadores_table = dynamodb.Table('ecobuscadores')
+    response = ecobuscadores_table.get_item(Key={'id': user_id})
+    user = response.get('Item')
+    if not user or 'following_organizers' not in user:
+        return jsonify({'error': 'Usuario no encontrado o no sigue a ningún ecoorganizador'}), 404
+
+    followed_organizer_ids = user['following_organizers']
+
+    # Recuperar eventos creados por los ecoorganizadores seguidos
+    eventos_table = dynamodb.Table('eventos')
+    followed_events = []
+    for organizer_id in followed_organizer_ids:
+        scan_kwargs = {
+            'FilterExpression': Key('id_organizador').eq(organizer_id)
+        }
+        response = eventos_table.scan(**scan_kwargs)
+        events = response.get('Items', [])
+        followed_events.extend(events)
+
+    # Convertir la fecha de creación a objeto datetime y ordenar
+    for event in followed_events:
+        event['fecha_creacion_datetime'] = datetime.strptime(event['fecha_creacion'], '%d/%m/%Y %H:%M:%S')
+    followed_events.sort(key=lambda x: x['fecha_creacion_datetime'], reverse=True)
+
+    # Eliminar la clave 'fecha_creacion_datetime'
+    for event in followed_events:
+        del event['fecha_creacion_datetime']
+
+    return jsonify(followed_events), 200
+
+
 @app.route('/add_review', methods=['POST'])
 @jwt_required()
 def add_review():
