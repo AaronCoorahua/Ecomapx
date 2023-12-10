@@ -86,6 +86,7 @@ const Event = ({ route }) => {
     const [following, setFollowing] = useState(false);
     const [reviewText, setReviewText] = useState('');
     const [reviews, setReviews] = useState(event.resenas || []);
+    const [isFollowingStatusLoading, setIsFollowingStatusLoading] = useState(true);
 
     // Función para determinar si se debe mostrar el botón de puntuar
     const shouldShowRateButton = () => {
@@ -126,9 +127,29 @@ const Event = ({ route }) => {
         });
     };
 
-    const toggleFollowing = () => {
-        setFollowing(!following);
+    const toggleFollowing = async () => {
+        if (!following) {
+            setFollowing(true);
+            const userId = await AsyncStorage.getItem('userId'); // Asegúrate de tener este valor almacenado en algún lugar
+            await AsyncStorage.setItem(`following_${userId}_${event.id_organizador}`, 'true');
+    
+            // Llamar al endpoint para incrementar los seguidores
+            try {
+                const token = await AsyncStorage.getItem('userToken');
+                const url = `http://192.168.0.17:5000/increment_followers/${event.id_organizador}`;
+                console.log(`Enviando solicitud POST a: ${url}`);  // Nuevo console.log
+                await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+            } catch (error) {
+                console.error('Error al incrementar seguidores', error);
+            }
+        }
     };
+    
 
     const buttonStyle = following ? styles.buttonSiguiendo : styles.buttonSeguir;
     const buttonText = following ? 'Siguiendo' : 'Seguir';
@@ -137,7 +158,7 @@ const Event = ({ route }) => {
     const fetchOrganizerDetails = async () => {
         try {
             const token = await AsyncStorage.getItem('userToken');
-            const response = await fetch(`http://192.168.3.4:5000/get_organizer_details/${event.id_organizador}`, {
+            const response = await fetch(`http://192.168.0.17:5000/get_organizer_details/${event.id_organizador}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -158,7 +179,7 @@ const Event = ({ route }) => {
 
     const fetchEventDetails = async () => {
         try {
-            const response = await fetch(`http://192.168.3.4:5000/event_details/${event.id}`, {
+            const response = await fetch(`http://192.168.0.17:5000/event_details/${event.id}`, {
                 headers: {
                     // Configuración de headers...
                 }
@@ -192,6 +213,21 @@ const Event = ({ route }) => {
     }, [event.id, event.id_organizador]); // Dependencias actualizadas
 
 
+    // Cargar el estado de seguimiento cuando el componente se monta
+    useEffect(() => {
+        const loadFollowingStatus = async () => {
+            const userId = await AsyncStorage.getItem('userId');
+            const followingStatus = await AsyncStorage.getItem(`following_${userId}_${event.id_organizador}`);
+            if (followingStatus) {
+                setFollowing(true);
+            }
+            setIsFollowingStatusLoading(false);
+        };
+
+        loadFollowingStatus();
+    }, [event.id_organizador]);
+
+
     useEffect(() => {
         const loadUserRoleandEvents = async () => {
             const role = await AsyncStorage.getItem('rol');
@@ -212,7 +248,7 @@ const Event = ({ route }) => {
     const fetchUserAssistedEvents = async (token) => {
         try {
             if (token) {
-                const response = await fetch('http://192.168.3.4:5000/get_user_assisted_events', {
+                const response = await fetch('http://192.168.0.17:5000/get_user_assisted_events', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -254,7 +290,7 @@ const Event = ({ route }) => {
             }
     
             // Llamada al endpoint para registrar asistencia
-            const response = await fetch('http://192.168.3.4:5000/assist_event', {
+            const response = await fetch('http://192.168.0.17:5000/assist_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -278,7 +314,7 @@ const Event = ({ route }) => {
                 });
     
                 // Llamada adicional para actualizar el número de confirmados
-                const confirmResponse = await fetch(`http://192.168.3.4:5000/event_confirm_count/${event.id}`, {
+                const confirmResponse = await fetch(`http://192.168.0.17:5000/event_confirm_count/${event.id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
@@ -326,7 +362,7 @@ const Event = ({ route }) => {
     
             console.log('Puntuación seleccionada por el usuario:', tempStarCount);
     
-            const response = await fetch('http://192.168.3.4:5000/rate_event', {
+            const response = await fetch('http://192.168.0.17:5000/rate_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -369,7 +405,7 @@ const Event = ({ route }) => {
     
         try {
             const token = await AsyncStorage.getItem('userToken');
-            const response = await fetch('http://192.168.3.4:5000/add_review', {
+            const response = await fetch('http://192.168.0.17:5000/add_review', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -436,14 +472,17 @@ const Event = ({ route }) => {
             </View>
             <View style={styles.userInfoContainer}>
             <Text style={styles.userId2}>{organizerName}</Text>
-            {userRole === 'ecobuscador' && (
-                <TouchableOpacity
-                style={[buttonStyle]}
-                onPress={toggleFollowing}
-                >
-                <Text style={textStyle}>{buttonText}</Text>
-                </TouchableOpacity>
-            )}
+                {userRole === 'ecobuscador' && (
+                    // Renderiza el botón solo si el estado ha terminado de cargar
+                    !isFollowingStatusLoading && (
+                        <TouchableOpacity
+                            style={[buttonStyle]}
+                            onPress={toggleFollowing}
+                        >
+                            <Text style={textStyle}>{buttonText}</Text>
+                        </TouchableOpacity>
+                    )
+                )}
             </View>
             <Text style={styles.location}>{event.ubicacion}</Text>
             <View style={styles.description}>

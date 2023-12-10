@@ -687,6 +687,40 @@ def get_organizer_details(organizer_id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/increment_followers/<organizer_id>', methods=['POST'])
+def increment_followers(organizer_id):
+    print(f"Incrementar seguidores para el organizador: {organizer_id}")  # Nuevo print
+    try:
+        table = dynamodb.Table('ecoorganizadores')
+
+        # Obtener el número actual de seguidores
+        response = table.get_item(Key={'id': organizer_id})
+        organizer = response.get('Item')
+        if not organizer:
+            print("Organizador no encontrado")  # Nuevo print
+            return jsonify({'error': 'Organizador no encontrado'}), 404
+        
+        print("Organizador encontrado para incrementar followers")  # Modificado
+        current_followers = organizer.get('cant_seguidores', 0)
+
+        new_followers_count = current_followers + 1
+
+        # Actualizar el contador en la base de datos
+        update_response = table.update_item(
+            Key={'id': organizer_id},
+            UpdateExpression="set cant_seguidores = :val",
+            ExpressionAttributeValues={':val': new_followers_count},
+            ReturnValues="UPDATED_NEW"
+        )
+        print(f"Respuesta de actualización: {update_response}")  # Nuevo print
+
+        return jsonify({'message': 'Seguidores actualizados correctamente'}), 200
+
+    except Exception as e:
+        print(f"Error al incrementar seguidores: {e}")  # Modificado
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/add_review', methods=['POST'])
 @jwt_required()
 def add_review():
