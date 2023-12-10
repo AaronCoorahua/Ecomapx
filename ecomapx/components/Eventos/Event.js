@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView, Alert, Modal,TouchableOpacity,  ActivityIndicator} from 'react-native';
+import { View, TextInput, Text, Image, StyleSheet, ScrollView, Button, KeyboardAvoidingView, Alert, Modal,TouchableOpacity,  ActivityIndicator} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect} from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
@@ -50,6 +50,23 @@ const StarDisplay = ({ new_average }) => {
     }
 };
 
+const ReviewList = ({ reviews }) => {
+    if (reviews.length === 0) {
+        return <Text style={styles.noReviewsText}>Sin comentarios</Text>;
+    }
+
+    return (
+        <View>
+            {reviews.map((review, index) => (
+                <View key={index} style={styles.reviewItem}>
+                    <Text style={styles.reviewText}>Usuario: {review.user_id || 'Usuario Desconocido'}</Text>
+                    <Text style={styles.reviewText}>Comentario: {review.review || 'Sin comentario'}</Text>
+                </View>
+            ))}
+        </View>
+    );
+};
+
 
 const Event = ({ route }) => {
     const navigation = useNavigation();
@@ -67,6 +84,8 @@ const Event = ({ route }) => {
     const [hasUserRated, setHasUserRated] = useState(false);
     const [organizerName, setOrganizerName] = useState('');
     const [following, setFollowing] = useState(false);
+    const [reviewText, setReviewText] = useState('');
+    const [reviews, setReviews] = useState(event.resenas || []);
 
     // Función para determinar si se debe mostrar el botón de puntuar
     const shouldShowRateButton = () => {
@@ -118,7 +137,7 @@ const Event = ({ route }) => {
     const fetchOrganizerDetails = async () => {
         try {
             const token = await AsyncStorage.getItem('userToken');
-            const response = await fetch(`http://192.168.0.17:5000/get_organizer_details/${event.id_organizador}`, {
+            const response = await fetch(`http://192.168.3.4:5000/get_organizer_details/${event.id_organizador}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -139,7 +158,7 @@ const Event = ({ route }) => {
 
     const fetchEventDetails = async () => {
         try {
-            const response = await fetch(`http://192.168.0.17:5000/event_details/${event.id}`, {
+            const response = await fetch(`http://192.168.3.4:5000/event_details/${event.id}`, {
                 headers: {
                     // Configuración de headers...
                 }
@@ -193,7 +212,7 @@ const Event = ({ route }) => {
     const fetchUserAssistedEvents = async (token) => {
         try {
             if (token) {
-                const response = await fetch('http://192.168.0.17:5000/get_user_assisted_events', {
+                const response = await fetch('http://192.168.3.4:5000/get_user_assisted_events', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -235,7 +254,7 @@ const Event = ({ route }) => {
             }
     
             // Llamada al endpoint para registrar asistencia
-            const response = await fetch('http://192.168.0.17:5000/assist_event', {
+            const response = await fetch('http://192.168.3.4:5000/assist_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -259,7 +278,7 @@ const Event = ({ route }) => {
                 });
     
                 // Llamada adicional para actualizar el número de confirmados
-                const confirmResponse = await fetch(`http://192.168.0.17:5000/event_confirm_count/${event.id}`, {
+                const confirmResponse = await fetch(`http://192.168.3.4:5000/event_confirm_count/${event.id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
@@ -307,7 +326,7 @@ const Event = ({ route }) => {
     
             console.log('Puntuación seleccionada por el usuario:', tempStarCount);
     
-            const response = await fetch('http://192.168.0.17:5000/rate_event', {
+            const response = await fetch('http://192.168.3.4:5000/rate_event', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -340,6 +359,49 @@ const Event = ({ route }) => {
     
         // Cierra el modal después de intentar enviar la puntuación
         setModalVisible(false);
+    };
+
+    const handleAddReview = async () => {
+        if (!reviewText.trim()) {
+            Alert.alert('Error', 'Por favor, escribe una reseña.');
+            return;
+        }
+    
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            const response = await fetch('http://192.168.3.4:5000/add_review', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    event_id: event.id,
+                    review: reviewText
+                })
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                const newReview = { user_id: data.user_id, review: reviewText };
+    
+                // Actualiza el estado de las reseñas y también el estado del evento.
+                setReviews(prevReviews => [...prevReviews, newReview]);
+                setEvent(prevEvent => ({
+                    ...prevEvent,
+                    resenas: [...prevEvent.resenas, newReview]
+                }));
+    
+                setReviewText('');
+                Alert.alert('Éxito', 'Reseña agregada correctamente');
+            } else {
+                const errorData = await response.json();
+                Alert.alert('Error', errorData.error || 'No se pudo agregar la reseña');
+            }
+        } catch (error) {
+            console.error('Error al agregar reseña:', error);
+            Alert.alert('Error', 'Error al agregar la reseña');
+        }
     };
     
 
@@ -468,6 +530,16 @@ const Event = ({ route }) => {
             <View style={styles.nuevo}>
             <Button title="Go to UserProfile" onPress={() => navigation.navigate('Profile')} />
             </View>
+            <View style={styles.addReviewContainer}>
+                <TextInput
+                    style={styles.reviewInput}
+                    onChangeText={text => setReviewText(text)}
+                    value={reviewText}
+                    placeholder="Escribe tu comentario..."
+                />
+                <Button title="Enviar" onPress={handleAddReview} />
+            </View>
+            <ReviewList reviews={event.resenas || []} />
         </ScrollView>
        </KeyboardAvoidingView>
     );
@@ -706,6 +778,36 @@ const styles = StyleSheet.create({
     },
     rateButton: {
         // ... estilos para tu botón de puntuar ...
+    },
+    noReviewsText: {
+        fontSize: 16,
+        color: 'grey',
+        textAlign: 'center',
+        marginTop: 20,
+    },
+    reviewItem: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        padding: 10,
+        marginTop: 10,
+    },
+    reviewText: {
+        fontSize: 14,
+        color: 'black',
+    },
+    addReviewContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 10,
+    },
+    reviewInput: {
+        flex: 1,
+        marginRight: 10,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        padding: 10,
     },
 });
 

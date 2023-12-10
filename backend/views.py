@@ -711,7 +711,7 @@ def add_review():
 
 
         if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-            return jsonify({'message': 'Review added successfully'}), 201
+            return jsonify({'message': 'Review added successfully', 'user_id': user_id}), 201
         else:
             return jsonify({'error': 'Failed to add review'}), 500
 
