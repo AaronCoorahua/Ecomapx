@@ -128,29 +128,55 @@ const Event = ({ route }) => {
     };
 
     const toggleFollowing = async () => {
-        if (!following) {
-            setFollowing(true);
-            const userId = await AsyncStorage.getItem('userId'); // Asegúrate de tener este valor almacenado en algún lugar
-            await AsyncStorage.setItem(`following_${userId}_${event.id_organizador}`, 'true');
+        const userId = await AsyncStorage.getItem('userId'); // Obtiene el ID del usuario
+        const token = await AsyncStorage.getItem('userToken'); // Obtiene el token de autenticación
+        const currentlyFollowing = following; // Guarda el estado actual de 'following'
+        const action = currentlyFollowing ? 'unfollow' : 'follow'; // Determina la acción basada en el estado actual
     
-            // Llamar al endpoint para incrementar los seguidores
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                const url = `http://192.168.0.17:5000/increment_followers/${event.id_organizador}`;
-                console.log(`Enviando solicitud POST a: ${url}`);  // Nuevo console.log
-                await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
-            } catch (error) {
-                console.error('Error al incrementar seguidores', error);
+        try {
+            // Envía la solicitud para actualizar la lista de seguimiento del usuario
+            const followingUrl = `http://192.168.0.17:5000/update_following/${userId}`;
+            await fetch(followingUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    organizer_id: event.id_organizador,
+                    action: action
+                }),
+            });
+    
+            // Envía la solicitud para actualizar el contador de seguidores del ecoorganizador
+            const followersUrl = `http://192.168.0.17:5000/update_followers/${event.id_organizador}`;
+            await fetch(followersUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action: action }),
+            });
+    
+            // Actualizar AsyncStorage para reflejar el cambio de estado
+            const key = `following_${userId}_${event.id_organizador}`;
+            if (action === 'follow') {
+                await AsyncStorage.setItem(key, 'true');
+            } else {
+                await AsyncStorage.removeItem(key);
             }
+    
+            // Actualizar el estado de seguimiento
+            setFollowing(!currentlyFollowing);
+    
+        } catch (error) {
+            console.error('Error al procesar la acción de seguimiento', error);
+            // Si hubo un error, revierte el estado de 'following'
+            setFollowing(currentlyFollowing);
         }
     };
     
-
     const buttonStyle = following ? styles.buttonSiguiendo : styles.buttonSeguir;
     const buttonText = following ? 'Siguiendo' : 'Seguir';
     const textStyle = following ? styles.buttonTextSiguiendo : styles.buttonTextSeguir;
@@ -217,16 +243,15 @@ const Event = ({ route }) => {
     useEffect(() => {
         const loadFollowingStatus = async () => {
             const userId = await AsyncStorage.getItem('userId');
-            const followingStatus = await AsyncStorage.getItem(`following_${userId}_${event.id_organizador}`);
-            if (followingStatus) {
-                setFollowing(true);
-            }
+            const key = `following_${userId}_${event.id_organizador}`;
+            const followingStatus = await AsyncStorage.getItem(key);
+            setFollowing(!!followingStatus);
             setIsFollowingStatusLoading(false);
         };
-
+    
         loadFollowingStatus();
     }, [event.id_organizador]);
-
+    
 
     useEffect(() => {
         const loadUserRoleandEvents = async () => {

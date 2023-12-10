@@ -687,38 +687,72 @@ def get_organizer_details(organizer_id):
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/increment_followers/<organizer_id>', methods=['POST'])
-def increment_followers(organizer_id):
-    print(f"Incrementar seguidores para el organizador: {organizer_id}")  # Nuevo print
+@app.route('/update_followers/<organizer_id>', methods=['POST'])
+def update_followers(organizer_id):
+    data = request.get_json()
+    action = data['action']  # 'follow' o 'unfollow'
+
     try:
         table = dynamodb.Table('ecoorganizadores')
-
-        # Obtener el número actual de seguidores
         response = table.get_item(Key={'id': organizer_id})
         organizer = response.get('Item')
         if not organizer:
-            print("Organizador no encontrado")  # Nuevo print
             return jsonify({'error': 'Organizador no encontrado'}), 404
         
-        print("Organizador encontrado para incrementar followers")  # Modificado
         current_followers = organizer.get('cant_seguidores', 0)
 
-        new_followers_count = current_followers + 1
+        if action == 'follow':
+            new_followers_count = current_followers + 1
+        elif action == 'unfollow':
+            new_followers_count = max(0, current_followers - 1)  # Evita números negativos
+        else:
+            return jsonify({'error': 'Acción no válida'}), 400
 
-        # Actualizar el contador en la base de datos
-        update_response = table.update_item(
+        table.update_item(
             Key={'id': organizer_id},
             UpdateExpression="set cant_seguidores = :val",
             ExpressionAttributeValues={':val': new_followers_count},
             ReturnValues="UPDATED_NEW"
         )
-        print(f"Respuesta de actualización: {update_response}")  # Nuevo print
 
-        return jsonify({'message': 'Seguidores actualizados correctamente'}), 200
+        return jsonify({'message': 'Contador de seguidores actualizado'}), 200
 
     except Exception as e:
-        print(f"Error al incrementar seguidores: {e}")  # Modificado
         return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/update_following/<user_id>', methods=['POST'])
+def update_following(user_id):
+    organizer_id = request.json.get('organizer_id')
+    action = request.json.get('action')  # 'follow' o 'unfollow'
+
+    table = dynamodb.Table('ecobuscadores')
+
+    # Obtén el usuario actual
+    response = table.get_item(Key={'id': user_id})
+    user = response.get('Item')
+
+    if not user:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+
+    # Actualiza la lista de seguimiento del usuario
+    if action == 'follow':
+        # Asegúrate de que 'following_organizers' es una lista, si no existe, créala
+        followed_organizers = set(user.get('following_organizers', []))
+        followed_organizers.add(organizer_id)
+    elif action == 'unfollow':
+        followed_organizers = set(user.get('following_organizers', []))
+        followed_organizers.discard(organizer_id)
+    
+    # Guarda los cambios en la base de datos
+    table.update_item(
+        Key={'id': user_id},
+        UpdateExpression="set following_organizers = :val",
+        ExpressionAttributeValues={':val': list(followed_organizers)},
+        ReturnValues="UPDATED_NEW"
+    )
+
+    return jsonify({'message': 'Lista de seguimiento actualizada'}), 200
 
 
 @app.route('/add_review', methods=['POST'])
