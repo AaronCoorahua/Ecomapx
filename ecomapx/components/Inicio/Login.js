@@ -345,7 +345,7 @@ inputWithIcon: {
     marginBottom: 10,
   },
   loginText: {
-      color: "#FFEBEE",
+      color: "white",
       fontSize: 22,
       fontWeight: "bold",
   },

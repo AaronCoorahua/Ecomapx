@@ -56,8 +56,9 @@ export default function Register({ onSuccessfulRegister }) {
       const data = await response.json();
 
       if (response.status === 201) {
-        onSuccessfulRegister();
+        console.log('Registro exitoso'); // Mensaje de confirmación de registro exitoso
         navigation.navigate('Login'); // Navegación automática al login después de un registro exitoso
+        onSuccessfulRegister();
       } else {
         Alert.alert('Error', data.error || 'Error al registrar.');
       }
