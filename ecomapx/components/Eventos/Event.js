@@ -4,13 +4,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect} from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
 import distritosSecurity from '../../data/distritos.json';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {Rating, AirbnbRating } from 'react-native-ratings';
-import {FontAwesome} from '@expo/vector-icons';
+import FontistoIcon from 'react-native-vector-icons/Fontisto';
 // Importando el Logo de Google Maps:
 import gmaps from '../../assets/logo-gmaps.png'; 
+import ComunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Entypo from 'react-native-vector-icons/Entypo';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+
+
 
 const getSecurityIconColor = (securityLevel) => {
     if (securityLevel <= 3) {
@@ -496,7 +501,9 @@ const Event = ({ route }) => {
             <Text style={styles.dospuntos}>:</Text>
             </View>
             <View style={styles.userInfoContainer}>
-            <Text style={styles.userId2}>{organizerName}</Text>
+            <Text style={userRole === 'ecoorganizador' ? styles.userId3 : styles.userId2}>
+                {organizerName}
+            </Text>
                 {userRole === 'ecobuscador' && (
                     // Renderiza el botón solo si el estado ha terminado de cargar
                     !isFollowingStatusLoading && (
@@ -509,20 +516,52 @@ const Event = ({ route }) => {
                     )
                 )}
             </View>
-            <Text style={styles.location}>{event.ubicacion}</Text>
-            <View style={styles.description}>
-            <Text >{event.descripcion}</Text>
+            <View style={styles.dashedSeparator3} />
+            <View style={styles.locationContainer}>
+                    <FontistoIcon name="map-marker-alt" size={20} marginTop={0} marginRight={8} marginLeft={4} color="#000" />
+                    <Text style={styles.location}>{event.ubicacion}</Text>
             </View>
+            <View style={styles.dashedSeparator} />
+            <View style={styles.descriptionContainer}>
+                    <ComunityIcon name="text" size={23} marginTop={8} marginRight={5} color="#000" /> 
+                    <Text style={styles.description}>{event.descripcion}</Text>
+            </View>
+            <View style={styles.dashedSeparator} />
             <Text style={styles.detail}>{event.descrip_detail}</Text>
             <Text style={styles.tag}>{event.tag}</Text>
-            <Text style={styles.capacity}>Capacidad: {Capacidad}</Text>
-            <Text style={styles.duration}>Duración: {durationInMinutes}</Text>
-            <Text style={styles.date}>{event.fecha}</Text>
-            <Text style={styles.time}>{event.hora}</Text>
-            <Text style={getStatusStyle(event.status)}>{event.status}</Text>
+            <View style={styles.capacityContainer}>
+                    <FontAwesome name="group" size={23} marginTop={-38} marginRight={5} color="#000" /> 
+                    <Text style={styles.capacity}>Capacidad: {Capacidad} personas</Text>
+            </View>
+            <View style={styles.dashedSeparator2} />
+            <View style={styles.duracionContainer}>
+                    <Entypo name="stopwatch" size={23} marginTop={17} marginRight={8} color="#000" /> 
+                    <Text style={styles.duration}>Duración: {durationInMinutes} minutos</Text>
+            </View>
+            <View style={styles.dashedSeparator} />
+            <View style={styles.dateContainer}>
+                        <FontAwesome name="calendar" size={19} marginTop={12} paddingHorizontal={3} marginRight={7} color="#000" />
+                        <Text style={styles.date}>{event.fecha}</Text>
+            </View>
+            <View style={styles.dashedSeparator} />
+            <View style={styles.timeContainer}>
+                            <AntDesign name="clockcircle" size={19} marginTop={13} paddingHorizontal={3} marginRight={6} color="#000" />
+                            <Text style={styles.time}>{event.hora}</Text>
+            </View>
+            <View style={styles.dashedSeparator} />
+            <View style={styles.statusContainer}>
+                            <ComunityIcon name="list-status" size={26} marginTop={8} marginLeft={2} marginRight={6} color="#000" />
+                            <Text style={getStatusStyle(event.status)}>{event.status}</Text>
+            </View>
+            <View style={styles.dashedSeparator} />
             {userRole === 'ecoorganizador' && (
-                <Text style={styles.confirmed}>Confirmados: {event.confirmados}</Text>
+                <View style={styles.confirmadosContainer}>
+                <FontAwesome5 name="handshake" size={23} marginTop={9} marginLeft={2} marginRight={3} color="#000" />
+                <Text style={styles.confirmed}>Confirmados: </Text> 
+                <Text style={styles.confirmed2}>{event.confirmados}</Text>
+                </View>
             )}
+            <View style={styles.dashedSeparator} />
             <View style={styles.ratingContainer}>
                     <StarDisplay new_average={starCount} />
                     {shouldShowRateButton() && (
@@ -591,9 +630,6 @@ const Event = ({ route }) => {
                     <Image source={gmaps} style={styles.gmapslogo} />
                 </TouchableOpacity>
             )}
-            <View style={styles.nuevo}>
-            <Button title="Go to UserProfile" onPress={() => navigation.navigate('Profile')} />
-            </View>
             <View style={styles.addReviewContainer}>
                 <TextInput
                     style={styles.reviewInput}
@@ -610,6 +646,66 @@ const Event = ({ route }) => {
 }
 
 const styles = StyleSheet.create({
+    confirmadosContainer:{
+        flexDirection: 'row',
+    },
+    statusContainer:{
+        flexDirection: 'row',
+    },
+    timeContainer:{
+        flexDirection: 'row',
+    },
+    dateContainer:{
+        flexDirection: 'row', // Alinea los elementos en una fila horizontal
+    },
+    duracionContainer:{
+        flexDirection: 'row', // Alinea los elementos en una fila horizontal
+        marginTop:-10,
+    },
+    capacityContainer:{
+        flexDirection: 'row', // Alinea los elementos en una fila horizontal
+    },
+    descriptionContainer:{
+        flexDirection: 'row', // Alinea los elementos en una fila horizontal
+    },
+    description: {
+        fontSize: 16,
+        marginTop: 10,
+        marginRight: 20,
+    },
+    dashedSeparator: {
+        height: 1,
+        width: "100%",
+        backgroundColor: "transparent",
+        borderStyle: 'dashed',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        marginBottom: -5,
+        marginTop: 5,
+    },
+    dashedSeparator2: {
+        height: 1,
+        width: "100%",
+        backgroundColor: "transparent",
+        borderStyle: 'dashed',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        marginTop: -10,
+    },
+    dashedSeparator3: {
+        height: 1,
+        width: "100%",
+        backgroundColor: "transparent",
+        borderStyle: 'dashed',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        marginTop: 10,
+    },
+    
+    locationContainer:{
+        marginTop: 8,
+        flexDirection: 'row', // Alinea los elementos en una fila horizontal
+    },
     gmapslogo:{
         width:30,
         height:30,
@@ -619,22 +715,22 @@ const styles = StyleSheet.create({
     statusPorEmpezar: {
         fontSize: 14,
         color: 'green',
-        marginTop: 10,
+        marginTop: 13,
     },
     statusEnProgreso: {
         fontSize: 14,
         color: 'orange',
-        marginTop: 10,
+        marginTop: 13,
     },
     statusFinalizado: {
         fontSize: 14,
         color: 'red',
-        marginTop: 10,
+        marginTop: 13,
     },
     statusDefault: {
         fontSize: 14,
         color: 'black', // Color por defecto
-        marginTop: 10,
+        marginTop: 13,
     },
     centeredView: {
         flex: 1,
@@ -725,6 +821,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 300,
         marginBottom: 10,
+        borderRadius: 16,
     },
     userInfoContainer: {
         flexDirection: 'row', // Alinea los elementos en una fila horizontal
@@ -751,18 +848,24 @@ const styles = StyleSheet.create({
         color: 'grey',
         marginRight: 12, // Agrega margen entre los elementos
     },
+    userId3: {
+        marginTop: 13,
+        fontSize: 14,
+        color: 'grey',
+        marginRight: 12, // Agrega margen entre los elementos
+    },
     buttonSeguir: {
         backgroundColor: '#3498db',
         padding: 9,
         borderRadius: 8,
-        marginTop: 10,
+        marginTop: 8,
     },
     buttonSiguiendo: {
         borderColor:'#3498db',
         borderWidth: 2.5,
         padding: 7.5,
         borderRadius: 8,
-        marginTop: 10,
+        marginTop: 8,
     },
     buttonTextSeguir: {
         color: 'white',
@@ -781,11 +884,7 @@ const styles = StyleSheet.create({
     },
     location: {
         fontSize: 18,
-        marginTop: 3,
-    },
-    description: {
-        fontSize: 16,
-        marginTop: 8,
+        marginTop: -1,
     },
     detail: {
         fontSize: 16,
@@ -802,7 +901,7 @@ const styles = StyleSheet.create({
     },
     duration: {
         fontSize: 16,
-        marginTop: 10,
+        marginTop: 18,
     },
     date: {
         fontSize: 18,
@@ -820,6 +919,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginTop: 10,
     },
+    confirmed2: {
+        fontSize: 16,
+        marginTop: 11,
+    },
     map: {
         width: '100%',
         height: 200,
@@ -827,7 +930,7 @@ const styles = StyleSheet.create({
     },
     securityIcon: {
         position: 'absolute',
-        top: 776,
+        top: 822,
         left: 25,
         zIndex: 1,
     },
@@ -838,6 +941,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        marginBottom: -7,
         // ... otros estilos para el contenedor de puntuación ...
     },
     rateButton: {
@@ -847,7 +951,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: 'grey',
         textAlign: 'center',
-        marginTop: 20,
+        marginTop: 5,
     },
     reviewItem: {
         borderWidth: 1,
@@ -864,6 +968,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 10,
+        marginTop: 10,
     },
     reviewInput: {
         flex: 1,

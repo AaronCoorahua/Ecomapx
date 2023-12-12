@@ -107,7 +107,7 @@ export default function Login({ onSuccessfulLogin }) {
               </View>
               <View style={styles.nuevo}>
               <View style={styles.textInputContainer}>
-                    <Icon name="user" size={20} color="#47897E" style={styles.iconStyle}/>
+                    <Icon name="user" size={20} color="#4DA769" style={styles.iconStyle}/>
                     <TextInput
                         placeholder="Email"
                         style={styles.inputWithIcon}
@@ -117,7 +117,7 @@ export default function Login({ onSuccessfulLogin }) {
                 </View>
 
                 <View style={styles.textInputContainer_}>
-                  <Icon name="lock" size={20} color="#47897E" style={styles.iconStyle}/>
+                  <Icon name="lock" size={20} color="#4DA769" style={styles.iconStyle}/>
                     <TextInput
                         placeholder="Password"
                         style={styles.inputWithIcon}
@@ -186,10 +186,10 @@ const styles = StyleSheet.create({
     borderRadius: 30, // Bordas circulares
   },
   roleButtonText: {
-    color: '#47897E', // Color de texto de los botones de roles
+    color: '#4DA769', // Color de texto de los botones de roles
   },
   selectedRoleButton: {
-    backgroundColor: '#47897E', // Color de fondo cuando el rol está seleccionado
+    backgroundColor: '#4DA769', // Color de fondo cuando el rol está seleccionado
   },
   selectedRoleButtonText: {
     color: '#FFFFFF', // Color de texto cuando el rol está seleccionado
@@ -332,7 +332,7 @@ inputWithIcon: {
   },
   loginButton: {
     marginTop: -100,
-    backgroundColor: "#47897E",
+    backgroundColor: "#4DA769",
     height: 50,
     borderRadius: 50,
     alignItems: "center",
