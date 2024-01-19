@@ -21,3 +21,8 @@ Para ejecutar el frontend navegar a la carpeta ecomapx mediante linea de comando
 - ```expo android``` 
 - ```expo ios``` (requiere un dispositivo iOS o macOS para acceder a un simulador de iOS)
 - ```expo web``` 
+
+<video width="320" height="240" controls>
+  <source src="Ecomapx.mp4" type="video/mp4">
+  Tu navegador no soporta el elemento de video.
+</video>
